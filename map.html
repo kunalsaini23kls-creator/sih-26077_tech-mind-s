@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIH-2026: NOWCAST AI | 70+ Catchment Nodes Interactive Map</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Core -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #050b14;
+      --bg-card: #0c1626;
+      --border-color: #172a46;
+      --accent-blue: #0284c7;
+      --accent-cyan: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Top Global Header */
+    .top-header {
+      background-color: #08101e;
+      border-bottom: 1px solid var(--border-color);
+      height: 64px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { font-size: 1.8rem; color: var(--accent-cyan); }
+    .brand-title { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; }
+    .brand-title span { color: var(--accent-cyan); }
+    .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); }
+    .badge-group { display: flex; gap: 8px; margin-left: 12px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; }
+    .badge.sih { background: #1d4ed8; color: #fff; }
+    .badge.live { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+    .pulse-dot { display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981; margin-right: 4px; }
+
+    .top-stats-bar { display: flex; align-items: center; gap: 20px; }
+    .top-stat { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; border-right: 1px solid #1e293b; padding-right: 16px; }
+    .top-stat:last-child { border-right: none; padding-right: 0; }
+    .top-stat i { font-size: 1.1rem; color: var(--accent-cyan); }
+    .top-stat small { color: var(--text-muted); font-size: 0.68rem; }
+
+    /* App Layout */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 210px;
+      background-color: #070d18;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+    .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background-color: #10233f; color: #38bdf8; }
+    .sidebar-brand-card { text-align: center; border-top: 1px solid var(--border-color); padding-top: 12px; }
+    .slogan-txt { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-bottom: 10px; }
+    .sih-cube { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Center Map Area */
+    .map-center-container { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; background: #060e1a; }
+    .map-top-toolbar {
+      height: 52px;
+      background: #081220;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+    .toolbar-title h2 { font-size: 1rem; font-weight: 700; color: #fff; }
+    .toolbar-title p { font-size: 0.7rem; color: var(--text-muted); }
+    .toolbar-mode-tabs { display: flex; gap: 8px; }
+    .mode-tab {
+      background: #0d1b2e;
+      border: 1px solid var(--border-color);
+      color: #94a3b8;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .mode-tab.active, .mode-tab:hover { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    /* Viewport */
+    .map-viewport { flex: 1; position: relative; width: 100%; height: 100%; }
+    #leaflet-map { width: 100%; height: 100%; z-index: 1; background: #070d18; }
+
+    /* Permanent Free Dark Radar Filter (Applied to OpenStreetMap, zero watermarks) */
+    .dark-radar-mode .leaflet-tile-pane {
+      filter: brightness(0.65) invert(1) contrast(2.2) hue-rotate(190deg) saturate(0.35);
+    }
+
+    /* Floating Search HUD */
+    .map-floating-search {
+      position: absolute;
+      top: 14px;
+      left: 60px;
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
+      background: rgba(12, 22, 38, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid #1e3a61;
+      border-radius: 8px;
+      padding: 5px 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    }
+    .search-input-wrap { display: flex; align-items: center; gap: 8px; position: relative; }
+    .search-input-wrap input { background: transparent; border: none; outline: none; color: #fff; font-size: 0.82rem; width: 250px; }
+    .area-select { background: #091322; border: 1px solid #1e3a61; color: #cbd5e1; font-size: 0.75rem; border-radius: 4px; padding: 4px 8px; outline: none; max-width: 220px; }
+    .locate-btn { background: #0f243e; border: 1px solid #1e3a61; color: #38bdf8; border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: 0.2s; }
+    .locate-btn:hover { background: #0284c7; color: white; }
+
+    /* Search Autocomplete Suggestions List */
+    .search-suggestions-dropdown {
+      position: absolute;
+      top: 38px;
+      left: 0;
+      width: 320px;
+      background: #091322;
+      border: 1px solid #0284c7;
+      border-radius: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+      z-index: 1001;
+    }
+    .suggestion-row {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #172a46;
+      font-size: 0.78rem;
+    }
+    .suggestion-row:hover { background: #10233f; color: #38bdf8; }
+    .suggestion-row small { color: var(--text-muted); display: block; font-size: 0.68rem; }
+
+    /* Live Radar dBZ Floating Legend */
+    .floating-radar-box {
+      position: absolute;
+      top: 14px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(12, 22, 38, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid #1e3a61;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      color: #fff;
+    }
+    .radar-grad-bar {
+      width: 170px;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #10b981 0%, #84cc16 20%, #eab308 40%, #f97316 60%, #ef4444 80%, #a855f7 100%);
+      margin: 4px 0;
+    }
+    .grad-numbers { display: flex; justify-content: space-between; font-size: 0.65rem; color: #94a3b8; }
+
+    /* Floating Bottom-Left Layers Card */
+    .map-floating-layers {
+      position: absolute;
+      bottom: 85px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(12, 22, 38, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid #1e3a61;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 20px;
+      font-size: 0.75rem;
+    }
+    .layer-col h4 { font-size: 0.75rem; margin-bottom: 6px; color: #fff; }
+    .risk-dot-list { display: flex; flex-direction: column; gap: 4px; }
+    .risk-row { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.green { background: #10b981; }
+    .dot.amber { background: #f59e0b; }
+    .dot.orange { background: #f97316; }
+    .dot.red { background: #ef4444; }
+    .dot.blue { background: #38bdf8; }
+    .layer-toggles-list { display: flex; flex-direction: column; gap: 4px; }
+    .layer-toggles-list label { color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.72rem; }
+
+    /* Base Map Switcher Button */
+    .map-style-switch-btn {
+      position: absolute;
+      bottom: 85px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(12, 22, 38, 0.94);
+      border: 1px solid #1e3a61;
+      color: #38bdf8;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Bottom Timeline Scrubber */
+    .map-timeline-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 20px;
+      right: 20px;
+      height: 60px;
+      background: rgba(12, 22, 38, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid #1e3a61;
+      border-radius: 10px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+    }
+    .timeline-ctrl-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #0284c7;
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+    .timeline-ctrl-btn.secondary { background: #0d1b2e; border: 1px solid #1e3a61; color: #94a3b8; }
+    .timeline-track-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .timeline-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+    .timeline-progress-rail {
+      position: relative;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #0284c7 0%, #10b981 20%, #f59e0b 50%, #ef4444 80%, #7e22ce 100%);
+      cursor: pointer;
+    }
+    .timeline-thumb {
+      position: absolute;
+      top: -3px;
+      left: 0%;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #0284c7;
+      box-shadow: 0 0 6px #0284c7;
+      transition: left 0.1s ease-out;
+    }
+    .timeline-meta { text-align: right; font-size: 0.7rem; color: var(--text-muted); }
+    .timeline-meta strong { color: #f8fafc; }
+
+    /* Right Sidebar */
+    .sidebar-right {
+      width: 370px;
+      background-color: #070e1b;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 16px;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .right-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .right-card-header h3 { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .back-btn-sm { background: #0d1b2e; border: 1px solid #1e3a61; color: #38bdf8; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; cursor: pointer; }
+
+    .area-hero-profile { display: flex; gap: 12px; }
+    .area-thumb { width: 110px; height: 80px; border-radius: 8px; object-fit: cover; border: 1px solid #1e3a61; }
+    .area-text-desc h2 { font-size: 1.05rem; font-weight: 700; }
+    .area-text-desc small { color: var(--text-muted); font-size: 0.72rem; display: block; margin-bottom: 4px; }
+    .area-text-desc .zone-p { font-size: 0.7rem; color: #cbd5e1; }
+
+    .risk-pill-banner {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid #059669;
+      color: #34d399;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .risk-pill-banner.moderate { background: rgba(245, 158, 11, 0.12); border-color: #b45309; color: #fbbf24; }
+    .risk-pill-banner.critical { background: rgba(239, 68, 68, 0.12); border-color: #ef4444; color: #f87171; }
+
+    .metric-rows-group { display: flex; flex-direction: column; gap: 8px; background: #091322; padding: 12px; border-radius: 8px; border: 1px solid #172a46; }
+    .metric-row { display: flex; justify-content: space-between; font-size: 0.78rem; border-bottom: 1px dashed #1e293b; padding-bottom: 5px; }
+    .metric-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .metric-row span { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .metric-row strong { color: #f8fafc; font-weight: 600; }
+
+    .advisory-alert-card {
+      background: #111d2e;
+      border-left: 3px solid #0284c7;
+      padding: 10px;
+      border-radius: 0 6px 6px 0;
+      display: flex;
+      gap: 10px;
+      font-size: 0.75rem;
+    }
+    .advisory-alert-card i { color: #38bdf8; font-size: 1.1rem; margin-top: 2px; }
+
+    .recent-alerts-wrapper { background: #091322; border-radius: 8px; border: 1px solid #172a46; padding: 12px; }
+    .recent-alerts-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .alert-item-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; padding: 5px 0; border-bottom: 1px solid #132238; cursor: pointer; }
+    .alert-tag-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; }
+    .tag-green { background: #064e3b; color: #6ee7b7; }
+    .tag-amber { background: #78350f; color: #fde68a; }
+
+    .sensor-box { background: #091322; border-radius: 8px; border: 1px solid #172a46; padding: 10px 12px; font-size: 0.75rem; display: flex; flex-direction: column; gap: 6px; }
+    .sensor-status-line { display: flex; justify-content: space-between; color: var(--text-muted); }
+    .sensor-status-line strong { color: #fff; }
+
+    .cap-dispatch-btn {
+      background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    }
+
+    .global-bottom-bar {
+      height: 32px;
+      background: #060c17;
+      border-top: 1px solid var(--border-color);
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* Leaflet Popups */
+    .leaflet-popup-content-wrapper {
+      background: #0c1626 !important;
+      color: #fff !important;
+      border: 1px solid #0284c7 !important;
+      border-radius: 8px !important;
+      font-size: 0.8rem !important;
+    }
+    .leaflet-popup-tip { background: #0c1626 !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="brand-box">
+      <i class="fa-solid fa-cloud-bolt brand-icon"></i>
+      <div>
+        <div class="brand-title">SIH-2026: <span>NOWCAST AI</span></div>
+        <div class="brand-subtitle">AI Severe Weather Nowcasting & Flood Decision Support</div>
+      </div>
+      <div class="badge-group">
+        <span class="badge sih">SIH26077</span>
+        <span class="badge live"><span class="pulse-dot"></span> LIVE DWR FEED</span>
+      </div>
+    </div>
+
+    <div class="top-stats-bar">
+      <div class="top-stat">
+        <i class="fa-solid fa-location-dot"></i>
+        <div><strong id="head-loc-name">Jaipur Urban</strong><br><small>26.91° N, 75.78° E</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <div><strong id="head-temp">31.4°C</strong><br><small id="head-cond">Partly Cloudy</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-droplet"></i>
+        <div><strong id="head-humidity">78%</strong><br><small>Humidity</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-wind"></i>
+        <div><strong id="head-wind">18.5 km/h</strong><br><small>Wind Velocity</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-regular fa-clock"></i>
+        <div><strong id="live-clock">14:32:18</strong><br><small>IST Live</small></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="nav-list">
+        <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="area.html" class="nav-item"><i class="fa-solid fa-location-crosshairs"></i> Area Details</a>
+        <a href="map.html" class="nav-item active"><i class="fa-solid fa-map-location-dot"></i> Map View</a>
+        <a href="alert.html" class="nav-item"><i class="fa-solid fa-bell"></i> Alerts & Notifications</a>
+        <a href="about.html" class="nav-item"><i class="fa-solid fa-circle-info"></i> About</a>
+      </nav>
+
+      <div class="sidebar-brand-card">
+        <div class="slogan-txt">Safer Jaipur<br>Stronger Tomorrow</div>
+        <div class="sih-cube">
+          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); font-size: 1.2rem;"></i>
+          <div style="text-align: left;"><strong>SIH 2026</strong><br><small>Innovation for a Safer India</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Interactive Map -->
+    <main class="map-center-container">
+      <div class="map-top-toolbar">
+        <div class="toolbar-title">
+          <h2><i class="fa-solid fa-map" style="color: var(--accent-cyan);"></i> Jaipur Map View</h2>
+          <p>Live Weather • Rainfall • Risk Zones • Infrastructure</p>
+        </div>
+        <div class="toolbar-mode-tabs">
+          <button class="mode-tab active" id="tab-radar" onclick="switchLayerMode('radar')"><i class="fa-solid fa-satellite-dish"></i> Radar (dBZ)</button>
+          <button class="mode-tab" id="tab-inundation" onclick="switchLayerMode('inundation')"><i class="fa-solid fa-water"></i> Inundation Zones</button>
+          <button class="mode-tab" id="tab-river" onclick="switchLayerMode('river')"><i class="fa-solid fa-route"></i> River Basin</button>
+          <button class="mode-tab" id="tab-aws" onclick="switchLayerMode('aws')"><i class="fa-solid fa-tower-broadcast"></i> IMD AWS</button>
+        </div>
+      </div>
+
+      <div class="map-viewport">
+        <!-- Floating Interactive Search HUD -->
+        <div class="map-floating-search">
+          <div class="search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass" style="color: #38bdf8;"></i>
+            <input type="text" id="ward-search-input" placeholder="Type Poornima, Airport, SMS, Sikar Rd..." oninput="handleLiveSearch(this.value)" autocomplete="off">
+            <div class="search-suggestions-dropdown" id="search-suggestions"></div>
+          </div>
+
+          <!-- Direct Dropdown to Select Any Area -->
+          <select class="area-select" id="ward-dropdown-select" onchange="zoomToSelectedAreaById(this.value)">
+            <option value="">-- Jump to Any of 70 Areas --</option>
+          </select>
+
+          <button class="locate-btn" onclick="resetMapCenter()" title="Recenter Jaipur"><i class="fa-solid fa-crosshairs"></i></button>
+        </div>
+
+        <!-- Radar dBZ Scale Floating Box -->
+        <div class="floating-radar-box">
+          <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-tower-observation" style="color: #38bdf8;"></i> Live Radar (dBZ)
+          </div>
+          <div class="radar-grad-bar"></div>
+          <div class="grad-numbers">
+            <span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span><span>60+</span>
+          </div>
+        </div>
+
+        <!-- Bottom-Left Map Layers & Risk Filter Card -->
+        <div class="map-floating-layers">
+          <div class="layer-col">
+            <h4>Risk Level</h4>
+            <div class="risk-dot-list">
+              <div class="risk-row"><span class="dot green"></span> Low (Dry)</div>
+              <div class="risk-row"><span class="dot amber"></span> Moderate</div>
+              <div class="risk-row"><span class="dot orange"></span> High</div>
+              <div class="risk-row"><span class="dot red"></span> Very High</div>
+            </div>
+          </div>
+          <div class="layer-col">
+            <h4>Map Layers</h4>
+            <div class="layer-toggles-list">
+              <label><input type="checkbox" id="check-radar" checked onchange="toggleMapLayer('radar')"> Doppler Radar (dBZ)</label>
+              <label><input type="checkbox" id="check-inundation" checked onchange="toggleMapLayer('inundation')"> Inundation Hazard Zones</label>
+              <label><input type="checkbox" id="check-river" checked onchange="toggleMapLayer('river')"> Dravyavati River Basin</label>
+              <label><input type="checkbox" id="check-aws" checked onchange="toggleMapLayer('aws')"> IMD AWS Sensors</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Base Map Switcher Button -->
+        <button class="map-style-switch-btn" id="btn-toggle-carto" onclick="toggleBaseTileStyle()">
+          <i class="fa-solid fa-layer-group"></i> <span id="carto-label">Dark Radar Mode</span>
+        </button>
+
+        <!-- Leaflet Map Container with Permanent Free Tiles -->
+        <div id="leaflet-map" class="dark-radar-mode"></div>
+
+        <!-- Bottom Scrubber Timeline Player -->
+        <div class="map-timeline-bar">
+          <button class="timeline-ctrl-btn" id="play-pause-btn" onclick="toggleTimelinePlay()"><i class="fa-solid fa-play"></i></button>
+          <button class="timeline-ctrl-btn secondary" onclick="resetTimeline()"><i class="fa-solid fa-rotate-left"></i></button>
+          
+          <div class="timeline-track-wrap">
+            <div class="timeline-labels">
+              <span style="color:#38bdf8; font-weight:bold;">Now</span>
+              <span>30m</span>
+              <span>60m</span>
+              <span>90m</span>
+              <span>120m</span>
+              <span>150m</span>
+              <span>180m</span>
+            </div>
+            <div class="timeline-progress-rail" onclick="seekTimeline(event)">
+              <div class="timeline-thumb" id="timeline-thumb-pin"></div>
+            </div>
+          </div>
+
+          <div class="timeline-meta">
+            <div>Last Updated: <strong id="timeline-last-updated">Real-Time Sync</strong></div>
+          </div>
+          <button class="timeline-ctrl-btn secondary" onclick="refreshLiveData()"><i class="fa-solid fa-arrows-rotate"></i></button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar (Selected Area Details) -->
+    <aside class="sidebar-right">
+      <div class="right-card-header">
+        <h3><i class="fa-solid fa-location-dot" style="color: var(--accent-cyan);"></i> Selected Area Details</h3>
+        <button class="back-btn-sm" onclick="resetMapCenter()"><i class="fa-solid fa-chevron-left"></i> Back</button>
+      </div>
+
+      <div class="area-hero-profile">
+        <img id="detail-img" src="https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=60" alt="Area View" class="area-thumb">
+        <div class="area-text-desc">
+          <h2 id="detail-name">Poornima College of Engineering</h2>
+          <small id="detail-landmark">ISI-6, RIICO Institutional Area, Sitapura</small>
+          <div class="zone-p">Zone : <span id="detail-zone">JMC Greater</span></div>
+          <div class="zone-p">Category : <span id="detail-ward">Educational Campus</span></div>
+        </div>
+      </div>
+
+      <!-- Risk Status Banner -->
+      <div class="risk-pill-banner" id="detail-risk-banner">
+        <i class="fa-solid fa-shield-halved"></i> <span id="detail-risk-text">Normal (Dry)</span>
+      </div>
+
+      <!-- Key Metrics List -->
+      <div class="metric-rows-group">
+        <div class="metric-row">
+          <span><i class="fa-solid fa-cloud-showers-heavy"></i> Rainfall (60m Z-R)</span>
+          <strong id="detail-rain">0.0 mm/h</strong>
+        </div>
+        <div class="metric-row">
+          <span><i class="fa-solid fa-water"></i> Inundation Level</span>
+          <strong id="detail-inundation">0 cm</strong>
+        </div>
+        <div class="metric-row">
+          <span><i class="fa-solid fa-mountain"></i> Elevation</span>
+          <strong id="detail-elevation">385 m (Cartosat 30m DEM)</strong>
+        </div>
+        <div class="metric-row">
+          <span><i class="fa-solid fa-faucet-drip"></i> Drainage Capacity</span>
+          <strong id="detail-drainage">Normal (Dravyavati Downstream Basin)</strong>
+        </div>
+      </div>
+
+      <!-- Advisory Box -->
+      <div class="advisory-alert-card">
+        <i class="fa-solid fa-circle-info"></i>
+        <div>
+          <strong style="color: #38bdf8; font-size: 0.78rem;">Status & Advisory</strong>
+          <p id="detail-advisory" style="color: #cbd5e1; margin-top: 2px;">Campus approach roads and drainage network operating normally. No waterlogging.</p>
+        </div>
+      </div>
+
+      <!-- Quick Jump Areas -->
+      <div class="recent-alerts-wrapper">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h4 style="font-size: 0.8rem;"><i class="fa-solid fa-bell" style="color: #38bdf8;"></i> Quick Jump Areas</h4>
+          <a href="area.html" style="font-size: 0.7rem; color: #38bdf8; text-decoration: none;">View All 70</a>
+        </div>
+        <div class="recent-alerts-list">
+          <div class="alert-item-row" onclick="zoomToSelectedAreaById('poornima_college')">
+            <span><span class="dot blue" style="display:inline-block;"></span> <strong>Poornima College</strong></span>
+            <span class="alert-tag-badge tag-green">Normal</span>
+          </div>
+          <div class="alert-item-row" onclick="zoomToSelectedAreaById('poornima_university')">
+            <span><span class="dot blue" style="display:inline-block;"></span> <strong>Poornima University</strong></span>
+            <span class="alert-tag-badge tag-green">Normal</span>
+          </div>
+          <div class="alert-item-row" onclick="zoomToSelectedAreaById('mg_hospital')">
+            <span><span class="dot blue" style="display:inline-block;"></span> <strong>Mahatma Gandhi Hospital</strong></span>
+            <span class="alert-tag-badge tag-green">Normal</span>
+          </div>
+          <div class="alert-item-row" onclick="zoomToSelectedAreaById('jaipur_airport')">
+            <span><span class="dot green" style="display:inline-block;"></span> <strong>Jaipur Airport</strong></span>
+            <span class="alert-tag-badge tag-green">Normal</span>
+          </div>
+          <div class="alert-item-row" onclick="zoomToSelectedAreaById('sikar_road_alka')">
+            <span><span class="dot amber" style="display:inline-block;"></span> <strong>Sikar Road (Alka)</strong></span>
+            <span class="alert-tag-badge tag-amber">Low Bowl</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sensor Status -->
+      <div class="sensor-box">
+        <div style="font-weight: 700; color: #fff; margin-bottom: 2px;">
+          <i class="fa-solid fa-satellite-dish" style="color: #10b981;"></i> Sensor Data (Selected Area)
+        </div>
+        <div class="sensor-status-line">
+          <span>IMD Jaipur DWR</span>
+          <strong>5.5 cm C-Band <span style="color:#10b981;">(Operational)</span></strong>
+        </div>
+        <div class="sensor-status-line">
+          <span>INSAT-3DS TIR1</span>
+          <strong>-62.4°C</strong>
+        </div>
+      </div>
+
+      <!-- Dispatch Button -->
+      <button class="cap-dispatch-btn" onclick="window.location.href='alert.html'">
+        <i class="fa-solid fa-paper-plane"></i> Dispatch CAP Alert
+      </button>
+    </aside>
+  </div>
+
+  <!-- Bottom Global Bar -->
+  <footer class="global-bottom-bar">
+    <div>SIH-2026: NOWCAST AI &nbsp;|&nbsp; SIH26077 &nbsp;|&nbsp; MoES / IMD &nbsp;|&nbsp; ISRO</div>
+    <div style="display: flex; gap: 15px;">
+      <span><i class="fa-solid fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> System Online</span>
+      <span>Total Monitored Nodes: <strong>70 Areas Active</strong></span>
+      <span>Resolution: <strong>500m / 5min</strong></span>
+    </div>
+  </footer>
+
+  <script>
+    // FULL 70 JAIPUR LOCATIONS DATABASE
+    const JAIPUR_70_AREAS = [
+      // 1. Education & Universities
+      { id: "poornima_college", name: "Poornima College of Engineering", landmark: "ISI-6, RIICO Institutional Area, Sitapura", category: "Education", zone: "JMC Greater", coords: [26.7778, 75.8362], elevation: "385 m", drainage: "Dravyavati Downstream Basin", image: "https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=60" },
+      { id: "poornima_university", name: "Poornima University", landmark: "IS-2027 to 2031, Ramchandrapura, Sitapura Ext.", category: "Education", zone: "JMC Greater", coords: [26.7708, 75.8775], elevation: "380 m", drainage: "Sitapura Ext. Catchment", image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&auto=format&fit=crop&q=60" },
+      { id: "rajasthan_university", name: "University of Rajasthan (RU)", landmark: "JLN Marg, Bapu Nagar", category: "Education", zone: "JMC Heritage", coords: [26.8899, 75.8167], elevation: "420 m", drainage: "Jhalana Watershed", image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60" },
+      { id: "mnit_jaipur", name: "MNIT Jaipur", landmark: "JLN Marg, Malviya Nagar", category: "Education", zone: "JMC Greater", coords: [26.8640, 75.8108], elevation: "415 m", drainage: "Dravyavati River Feeder", image: "https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=60" },
+      { id: "sms_medical_college", name: "SMS Medical College", landmark: "JLN Marg, Ashok Nagar", category: "Education", zone: "JMC Heritage", coords: [26.9080, 75.8166], elevation: "425 m", drainage: "Central Urban Channel", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+      { id: "jecrc_sitapura", name: "JECRC Foundation & University", landmark: "RIICO Industrial Area, Sitapura", category: "Education", zone: "JMC Greater", coords: [26.7820, 75.8320], elevation: "386 m", drainage: "Dravyavati South Basin", image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&auto=format&fit=crop&q=60" },
+      { id: "manipal_university", name: "Manipal University Jaipur", landmark: "Dehmi Kalan, Ajmer Road", category: "Education", zone: "Jaipur Rural", coords: [26.8439, 75.5652], elevation: "375 m", drainage: "Ajmer Road Basin", image: "https://images.unsplash.com/photo-1562774053-701939374585?w=500&auto=format&fit=crop&q=60" },
+      { id: "amity_university", name: "Amity University Rajasthan", landmark: "Kant Kalwar, Delhi Highway", category: "Education", zone: "Jaipur North", coords: [27.1725, 75.9553], elevation: "430 m", drainage: "North Valley Runoff", image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=500&auto=format&fit=crop&q=60" },
+      { id: "subodh_college", name: "SS Jain Subodh PG College", landmark: "Rambagh Circle", category: "Education", zone: "JMC Heritage", coords: [26.8920, 75.8105], elevation: "418 m", drainage: "Rambagh Sump Catchment", image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60" },
+      { id: "maharani_college", name: "University Maharani College", landmark: "Ram Singh Road", category: "Education", zone: "JMC Heritage", coords: [26.9140, 75.8185], elevation: "424 m", drainage: "Albert Hall Outfall", image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60" },
+
+      // 2. Hospitals & Healthcare
+      { id: "mg_hospital", name: "Mahatma Gandhi Hospital & Medical College", landmark: "RIICO Institutional Area, Sitapura", category: "Hospital", zone: "JMC Greater", coords: [26.7725, 75.8622], elevation: "382 m", drainage: "Sitapura Industrial Drain", image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=60" },
+      { id: "sms_hospital", name: "SMS Hospital (Sawai Man Singh)", landmark: "Ashok Nagar / JLN Marg", category: "Hospital", zone: "JMC Heritage", coords: [26.9073, 75.8190], elevation: "426 m", drainage: "Amanishah East Channel", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+      { id: "fortis_hospital", name: "Fortis Escorts Hospital", landmark: "JLN Marg, Malviya Nagar", category: "Hospital", zone: "JMC Greater", coords: [26.8529, 75.8078], elevation: "416 m", drainage: "Jawahar Circle Basin", image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=60" },
+      { id: "ehcc_hospital", name: "EHCC Hospital (Eternal Heart Care)", landmark: "Jawahar Circle", category: "Hospital", zone: "JMC Greater", coords: [26.8436, 75.8038], elevation: "410 m", drainage: "Airport Catchment Trunk", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+      { id: "narayana_hospital", name: "Narayana Multispeciality Hospital", landmark: "Kumbha Marg, Pratap Nagar", category: "Hospital", zone: "JMC Greater", coords: [26.8040, 75.8160], elevation: "395 m", drainage: "Pratap Nagar Central Drain", image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=60" },
+      { id: "apex_hospital", name: "Apex Hospitals", landmark: "Sector 5, Malviya Nagar", category: "Hospital", zone: "JMC Greater", coords: [26.8570, 75.8190], elevation: "420 m", drainage: "Malviya South Basin", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+      { id: "sdmh_hospital", name: "Santokba Durlabhji Hospital (SDMH)", landmark: "Bhawani Singh Road, Bapu Nagar", category: "Hospital", zone: "JMC Heritage", coords: [26.8950, 75.8090], elevation: "419 m", drainage: "Dravyavati Upper Tributary", image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=60" },
+      { id: "ruhs_hospital", name: "RUHS Hospital & Medical College", landmark: "Sector 18, Pratap Nagar", category: "Hospital", zone: "JMC Greater", coords: [26.8010, 75.8390], elevation: "390 m", drainage: "Haldighati Outfall Trunk", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+      { id: "bmchrc_hospital", name: "Bhagwan Mahaveer Cancer Hospital", landmark: "JLN Marg, Bajaj Nagar", category: "Hospital", zone: "JMC Greater", coords: [26.8720, 75.8115], elevation: "417 m", drainage: "Bajaj Nagar Surface Sump", image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=500&auto=format&fit=crop&q=60" },
+      { id: "ck_birla_rbh", name: "CK Birla Hospital (RBH)", landmark: "Gopalpura Bypass Crossing", category: "Hospital", zone: "JMC Greater", coords: [26.8775, 75.7890], elevation: "408 m", drainage: "Gopalpura Storm Drain", image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=60" },
+
+      // 3. Transit & Railways & Airport
+      { id: "jaipur_airport", name: "Jaipur International Airport (JAI)", landmark: "Terminal 2 & Runway Area, Sanganer", category: "Transit", zone: "JMC Greater", coords: [26.8289, 75.8056], elevation: "385 m", drainage: "Sanganer Runway Storm Basin", image: "https://images.unsplash.com/photo-1542296332-2e4473faf563?w=500&auto=format&fit=crop&q=60" },
+      { id: "jaipur_junction", name: "Jaipur Junction Railway Station", landmark: "Station Road, Gopalbari", category: "Transit", zone: "JMC Heritage", coords: [26.9200, 75.7878], elevation: "428 m", drainage: "Railway Colony Culvert", image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=500&auto=format&fit=crop&q=60" },
+      { id: "gandhinagar_station", name: "Gandhinagar Railway Station", landmark: "Tonk Road / Bajaj Nagar", category: "Transit", zone: "JMC Greater", coords: [26.8785, 75.8020], elevation: "415 m", drainage: "Tonk Road Drainage Channel", image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=500&auto=format&fit=crop&q=60" },
+      { id: "durgapura_station", name: "Durgapura Railway Station", landmark: "Mahaveer Nagar / Durgapura", category: "Transit", zone: "JMC Greater", coords: [26.8515, 75.7865], elevation: "402 m", drainage: "Durgapura Elevated Sump", image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=500&auto=format&fit=crop&q=60" },
+      { id: "sindhi_camp", name: "Sindhi Camp Central Bus Terminal", landmark: "Station Road / Station Area", category: "Transit", zone: "JMC Heritage", coords: [26.9238, 75.8012], elevation: "430 m", drainage: "Old City Storm Interceptor", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=60" },
+      { id: "badi_chaupar_metro", name: "Badi Chaupar Metro Station", landmark: "Walled City Hub", category: "Transit", zone: "JMC Heritage", coords: [26.9240, 75.8290], elevation: "435 m", drainage: "Subterranean Canal Route", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=60" },
+      { id: "mansarovar_metro", name: "Mansarovar Metro Terminal", landmark: "Bhrigu Path / Metro Depot", category: "Transit", zone: "JMC Greater", coords: [26.8760, 75.7530], elevation: "394 m", drainage: "Dravyavati West Flank", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=60" },
+      { id: "narayan_singh_circle", name: "Narayan Singh Circle Bus Stand", landmark: "Tonk Road / JLN Cut", category: "Transit", zone: "JMC Heritage", coords: [26.9030, 75.8150], elevation: "424 m", drainage: "Central Jaipur Outfall", image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=60" },
+      { id: "bypass_200ft", name: "200 Feet Bypass Chauraha", landmark: "Ajmer Road Junction", category: "Transit", zone: "JMC Greater", coords: [26.8850, 75.7280], elevation: "398 m", drainage: "Ring Road Catchment", image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=500&auto=format&fit=crop&q=60" },
+      { id: "transport_nagar", name: "Transport Nagar Bus Entry", landmark: "Delhi Bypass Highway", category: "Transit", zone: "JMC Heritage", coords: [26.9085, 75.8520], elevation: "440 m", drainage: "Ghat Ki Guni Gorge", image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=500&auto=format&fit=crop&q=60" },
+
+      // 4. Critical Underpasses & Chokepoints
+      { id: "sikar_road_alka", name: "Sikar Road (Alka Cinema Underpass)", landmark: "Dadi Phatak Chauraha", category: "Chokepoint", zone: "JMC Greater", coords: [26.9634, 75.7725], elevation: "418 m (Low Bowl)", drainage: "Amanishah Outfall (Critical)", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "panipech_underpass", name: "Panipech Underpass", landmark: "Jhotwara / Subhash Nagar", category: "Chokepoint", zone: "JMC Greater", coords: [26.9463, 75.7554], elevation: "410 m (Low Bowl)", drainage: "North-West Underpass Canal", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "b2_bypass_crossing", name: "B2 Bypass Underpass", landmark: "Tonk Road Intersection", category: "Chokepoint", zone: "JMC Greater", coords: [26.8420, 75.7920], elevation: "392 m (Bowl)", drainage: "Dravyavati Crossing Culvert", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "jawahar_circle_cut", name: "Jawahar Circle Underpass", landmark: "JLN Marg Expressway Cut", category: "Chokepoint", zone: "JMC Greater", coords: [26.8465, 75.8010], elevation: "408 m", drainage: "Jawahar Circle Retention Pond", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "gopalpura_pulia", name: "Gopalpura Bypass Puliya", landmark: "Gujjar Ki Thadi Intersection", category: "Chokepoint", zone: "JMC Greater", coords: [26.8725, 75.7680], elevation: "400 m", drainage: "Gopalpura Main Open Drain", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "laxmi_mandir_cinema", name: "Laxmi Mandir Cinema Crossing", landmark: "Tonk Phatak Corridor", category: "Chokepoint", zone: "JMC Heritage", coords: [26.8855, 75.8025], elevation: "416 m", drainage: "Barkat Nagar Sump", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "rambagh_underpass", name: "Rambagh Circle Underpass", landmark: "Bhawani Singh Road Junction", category: "Chokepoint", zone: "JMC Heritage", coords: [26.8970, 75.8080], elevation: "418 m", drainage: "Rambagh Outfall", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "ajmeri_gate_crossing", name: "Ajmeri Gate Chauraha", landmark: "MI Road Entrance", category: "Chokepoint", zone: "JMC Heritage", coords: [26.9180, 75.8195], elevation: "426 m", drainage: "Walled City Storm Drain", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "sanganer_puliya", name: "Sanganer Flyover Puliya", landmark: "Old Sanganer Town Dravyavati Bridge", category: "Chokepoint", zone: "JMC Greater", coords: [26.8180, 75.7760], elevation: "382 m (River Bed)", drainage: "Dravyavati River Flank", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "haldighati_cut", name: "Haldighati Marg Chauraha", landmark: "Pratap Nagar Sector 8 Cut", category: "Chokepoint", zone: "JMC Greater", coords: [26.8105, 75.8230], elevation: "394 m", drainage: "Haldighati Sump", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+
+      // 5. City Wards & Residential / Commercial Hubs
+      { id: "sitapura_ind_area", name: "Sitapura Industrial Area", landmark: "Phases 1 to 4 / Jewellery Park", category: "Residential", zone: "JMC Greater", coords: [26.7850, 75.8450], elevation: "388 m", drainage: "Sitapura Storm Trunk", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "mansarovar_vt_road", name: "Mansarovar (VT Road)", landmark: "Ward 68, City Park Corridor", category: "Residential", zone: "JMC Greater", coords: [26.8524, 75.7612], elevation: "392 m", drainage: "Dravyavati Main Trunk", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "mansarovar_patel_marg", name: "Mansarovar (Patel Marg)", landmark: "Sector 7 Catchment", category: "Residential", zone: "JMC Greater", coords: [26.8610, 75.7680], elevation: "395 m", drainage: "Mansarovar Sector Canal", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "pratap_nagar_sec3", name: "Pratap Nagar (Sector 3)", landmark: "Housing Board Residential Hub", category: "Residential", zone: "JMC Greater", coords: [26.8200, 75.8210], elevation: "396 m", drainage: "Pratap Nagar Basin", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "pratap_nagar_sec11", name: "Pratap Nagar (Sector 11)", landmark: "Near Coaching Hub", category: "Residential", zone: "JMC Greater", coords: [26.8080, 75.8300], elevation: "392 m", drainage: "East Pratap Drainage", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=500&auto=format&fit=crop&q=60" },
+      { id: "malviya_calgiri", name: "Malviya Nagar (Calgiri Road)", landmark: "Apex Circle / Hospital Zone", category: "Residential", zone: "JMC Heritage", coords: [26.8549, 75.8155], elevation: "425 m", drainage: "Jhalana Catchment", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=500&auto=format&fit=crop&q=60" },
+      { id: "malviya_gaurav_tower", name: "Malviya Nagar (Gaurav Tower GT)", landmark: "Commercial High-Footfall Area", category: "Residential", zone: "JMC Greater", coords: [26.8580, 75.8060], elevation: "415 m", drainage: "GT Underpass Drainage", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=500&auto=format&fit=crop&q=60" },
+      { id: "jagatpura_akshaypatra", name: "Jagatpura (Akshay Patra)", landmark: "Mahal Road Corridor", category: "Residential", zone: "JMC Greater", coords: [26.8180, 75.8580], elevation: "405 m", drainage: "Mahal Road Storm Sump", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "jagatpura_railway", name: "Jagatpura Flyover Sector", landmark: "7 Number Stand / Railway Crossing", category: "Residential", zone: "JMC Greater", coords: [26.8380, 75.8450], elevation: "408 m", drainage: "Dharia River Outfall", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "vaishali_amrapali", name: "Vaishali Nagar (Amrapali Circle)", landmark: "Ward 22 Catchment", category: "Residential", zone: "JMC Greater", coords: [26.9124, 75.7420], elevation: "405 m", drainage: "West Drainage Trunk", image: "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=500&auto=format&fit=crop&q=60" },
+      { id: "vaishali_nursery", name: "Vaishali Nagar (Nursery Circle)", landmark: "Gandhi Path Cut", category: "Residential", zone: "JMC Greater", coords: [26.9030, 75.7380], elevation: "403 m", drainage: "Gandhi Path Storm Trunk", image: "https://images.unsplash.com/photo-1590073844006-33379778ae09?w=500&auto=format&fit=crop&q=60" },
+      { id: "c_scheme_ashok", name: "C-Scheme (Ashok Nagar)", landmark: "Statue Circle / Panch Batti", category: "Residential", zone: "JMC Heritage", coords: [26.9090, 75.8050], elevation: "425 m", drainage: "Civil Lines Central Channel", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "civil_lines_cm", name: "Civil Lines (Raj Bhavan Area)", landmark: "High Security Urban Zone", category: "Residential", zone: "JMC Greater", coords: [26.9020, 75.7820], elevation: "418 m", drainage: "Hawa Sadak Channel", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "vidhyadhar_spine", name: "Vidhyadhar Nagar (Central Spine)", landmark: "Sector 1 to 9 Plaza", category: "Residential", zone: "JMC Greater", coords: [26.9610, 75.7850], elevation: "428 m", drainage: "Amanishah Feeder Canal", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "raja_park_dhruv", name: "Raja Park (Dhruv Marg)", landmark: "LBS College / Market Street", category: "Residential", zone: "JMC Heritage", coords: [26.8980, 75.8310], elevation: "432 m", drainage: "Jhalana Foothill Runoff", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "bapu_nagar_mangal", name: "Bapu Nagar (Mangal Marg)", landmark: "Near Rajasthan College", category: "Residential", zone: "JMC Heritage", coords: [26.8920, 75.8150], elevation: "421 m", drainage: "Bapu Nagar Sump", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "sodala_hawa_sadak", name: "Sodala (Hawa Sadak)", landmark: "Elevated Road Corridor", category: "Residential", zone: "JMC Greater", coords: [26.8980, 75.7720], elevation: "408 m", drainage: "Dravyavati Sodala Inflow", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "shyam_nagar_janpath", name: "Shyam Nagar (Janpath)", landmark: "New Sanganer Road", category: "Residential", zone: "JMC Greater", coords: [26.8860, 75.7590], elevation: "400 m", drainage: "West Dravyavati Interceptor", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "nirman_nagar_kings", name: "Nirman Nagar (Kings Road)", landmark: "DCM Chauraha", category: "Residential", zone: "JMC Greater", coords: [26.8950, 75.7480], elevation: "402 m", drainage: "Ajmer Road Drainage Basin", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "jhotwara_kalwar", name: "Jhotwara (Kalwar Road)", landmark: "Panchyati Samiti Circle", category: "Residential", zone: "JMC Greater", coords: [26.9420, 75.7350], elevation: "412 m", drainage: "North-West Channel Basin", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "ambabari_circle", name: "Ambabari Circle", landmark: "Sikar Road Feeder", category: "Residential", zone: "JMC Greater", coords: [26.9530, 75.7830], elevation: "422 m", drainage: "Amanishah Upper Creek", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "murlipura_scheme", name: "Murlipura Scheme", landmark: "Vikas Nagar Catchment", category: "Residential", zone: "JMC Greater", coords: [26.9690, 75.7620], elevation: "419 m", drainage: "North Sikar Trunk", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "khatipura_road", name: "Khatipura (Sirsi Road Cut)", landmark: "Jaswant Nagar / Officer Campus", category: "Residential", zone: "JMC Greater", coords: [26.9200, 75.7380], elevation: "406 m", drainage: "Khatipura Canal", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "bani_park_collectorate", name: "Bani Park (Collectorate Circle)", landmark: "Kanti Chandra Road Hub", category: "Residential", zone: "JMC Heritage", coords: [26.9310, 75.7920], elevation: "432 m", drainage: "Collectorate Storm Sump", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "tonk_phatak_barkat", name: "Tonk Phatak (Barkat Nagar)", landmark: "Railway Underpass Corridor", category: "Residential", zone: "JMC Greater", coords: [26.8790, 75.7980], elevation: "414 m", drainage: "Barkat Sump Line", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "johari_bazar", name: "Johari Bazar (Walled City)", landmark: "Badi Chaupar to Sanganeri Gate", category: "Residential", zone: "JMC Heritage", coords: [26.9210, 75.8260], elevation: "434 m", drainage: "Mughal Sub-surface Canal", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "chandpole_bazar", name: "Chandpole Bazar (Walled City)", landmark: "Chhoti Chaupar to Chandpole Gate", category: "Residential", zone: "JMC Heritage", coords: [26.9250, 75.8150], elevation: "431 m", drainage: "Heritage Storm Network", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "amer_fort_area", name: "Amer Fort Catchment", landmark: "Maota Lake Watershed", category: "Residential", zone: "Jaipur Heritage North", coords: [26.9855, 75.8513], elevation: "475 m", drainage: "Maota Lake Overflow Stream", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "nahargarh_brahmpuri", name: "Nahargarh Foothills / Brahmpuri", landmark: "Foot of Aravali Range", category: "Residential", zone: "JMC Heritage", coords: [26.9380, 75.8320], elevation: "445 m", drainage: "Brahmpuri Gutter Outfall", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" },
+      { id: "muhana_mandi", name: "Muhana Terminal Mandi", landmark: "Diggi Malpura Highway", category: "Residential", zone: "JMC Greater", coords: [26.8020, 75.7250], elevation: "384 m", drainage: "South-West Drainage Basin", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" }
+    ];
+
+    // Dravyavati River Route
+    const DRAVYAVATI_RIVER_ROUTE = [
+      [26.9750, 75.7950], [26.9500, 75.7880], [26.9250, 75.7740],
+      [26.8950, 75.7680], [26.8650, 75.7620], [26.8350, 75.7720],
+      [26.8150, 75.7850], [26.7850, 75.8200], [26.7550, 75.8600]
+    ];
+
+    let map = null;
+    let baseTiles = null;
+    let radarOverlayLayer = null;
+    let inundationLayerGroup = null;
+    let riverLayer = null;
+    let markersLayerGroup = null;
+    let markersMap = {};
+    let isDarkRadar = true;
+    let timelinePlaying = false;
+    let timelineTimer = null;
+    let currentTimelineStep = 0;
+
+    // Live Clock
+    function runLiveClock() {
+      const el = document.getElementById("live-clock");
+      if (el) el.innerText = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    }
+    setInterval(runLiveClock, 1000);
+    runLiveClock();
+
+    // Map Engine Init with 100% Free OpenStreetMap Base
+    function initJaipurMapEngine() {
+      map = L.map('leaflet-map', {
+        center: [26.8950, 75.8000],
+        zoom: 12,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      L.control.zoom({ position: 'topleft' }).addTo(map);
+
+      // Free Official OpenStreetMap Tile (NEVER shows "API KEY REQUIRED")
+      baseTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        crossOrigin: true
+      }).addTo(map);
+
+      // Layer groups
+      inundationLayerGroup = L.layerGroup().addTo(map);
+      radarOverlayLayer = L.layerGroup().addTo(map);
+      markersLayerGroup = L.layerGroup().addTo(map);
+
+      // River Route
+      riverLayer = L.polyline(DRAVYAVATI_RIVER_ROUTE, {
+        color: '#00e5ff',
+        weight: 4,
+        opacity: 0.9,
+        dashArray: '8, 6'
+      }).addTo(map);
+
+      // Radar Echoes
+      addRadarConvectiveEchoes();
+
+      // Render 70 Areas
+      renderAll70Areas();
+
+      // Dropdown
+      populateDropdownOptions();
+
+      // Default selection to Poornima College
+      zoomToSelectedAreaById('poornima_college');
+
+      // Live Weather Sync
+      syncOpenMeteoLive();
+
+      setTimeout(() => { map.invalidateSize(); }, 300);
+    }
+
+    // Populate Dropdown Options
+    function populateDropdownOptions() {
+      const select = document.getElementById("ward-dropdown-select");
+      JAIPUR_70_AREAS.forEach(area => {
+        const opt = document.createElement("option");
+        opt.value = area.id;
+        opt.innerText = `${area.name} (${area.category})`;
+        select.appendChild(opt);
+      });
+    }
+
+    // Render 70 Areas Markers & Buffer Circles
+    function renderAll70Areas() {
+      markersLayerGroup.clearLayers();
+      inundationLayerGroup.clearLayers();
+
+      JAIPUR_70_AREAS.forEach(area => {
+        let pinColor = "#3b82f6"; // Blue (Colleges)
+        if (area.category === "Hospital") pinColor = "#ec4899"; // Pink
+        else if (area.category === "Transit") pinColor = "#10b981"; // Green
+        else if (area.category === "Chokepoint") pinColor = "#f59e0b"; // Amber Warning
+        else if (area.category === "Residential") pinColor = "#8b5cf6"; // Purple
+
+        // Inundation buffer circle
+        const circle = L.circle(area.coords, {
+          radius: area.category === "Chokepoint" ? 900 : 600,
+          color: pinColor,
+          fillColor: pinColor,
+          fillOpacity: 0.15,
+          weight: 1.5
+        }).addTo(inundationLayerGroup);
+
+        // Core Pin Marker
+        const marker = L.circleMarker(area.coords, {
+          radius: 7,
+          color: '#ffffff',
+          fillColor: pinColor,
+          fillOpacity: 1,
+          weight: 2
+        }).addTo(markersLayerGroup);
+
+        markersMap[area.id] = marker;
+
+        const popupContent = `
+          <div style="min-width: 210px; font-family: sans-serif; font-size: 0.8rem; line-height: 1.5;">
+            <strong style="font-size: 0.95rem; color: #38bdf8;">${area.name}</strong><br>
+            <span style="color: #94a3b8; font-size: 0.72rem;">${area.landmark}</span>
+            <hr style="border: 0; border-top: 1px solid #1e3a61; margin: 6px 0;">
+            <b>Category:</b> ${area.category}<br>
+            <b>Elevation:</b> ${area.elevation}<br>
+            <b>Drainage:</b> ${area.drainage}<br>
+            <div style="margin-top: 8px;">
+              <button onclick="zoomToSelectedAreaById('${area.id}')" style="background: #0284c7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;">View Telemetry</button>
+            </div>
+          </div>
+        `;
+        marker.bindPopup(popupContent);
+
+        marker.on('click', () => {
+          zoomToSelectedAreaById(area.id);
+        });
+      });
+    }
+
+    // Add Doppler Radar Convective Echoes
+    function addRadarConvectiveEchoes() {
+      radarOverlayLayer.clearLayers();
+      const echoes = [
+        { center: [26.9634, 75.7650], radius: 4500, color: '#ef4444', fill: '#ef4444' },
+        { center: [26.9450, 75.7450], radius: 6500, color: '#f97316', fill: '#f97316' },
+        { center: [26.8524, 75.7612], radius: 4000, color: '#eab308', fill: '#eab308' },
+        { center: [26.7778, 75.8362], radius: 3000, color: '#10b981', fill: '#10b981' }
+      ];
+
+      echoes.forEach(e => {
+        L.circle(e.center, {
+          radius: e.radius,
+          color: e.color,
+          fillColor: e.fill,
+          fillOpacity: 0.22,
+          weight: 0
+        }).addTo(radarOverlayLayer);
+      });
+    }
+
+    // ZOOM TO SELECTED AREA WITH DEEP ZOOM (Level 16)
+    function zoomToSelectedAreaById(areaId) {
+      if (!areaId) return;
+
+      const area = JAIPUR_70_AREAS.find(a => a.id === areaId);
+      if (!area) return;
+
+      // 1. Zoom and Center to coords
+      map.flyTo(area.coords, 16, {
+        duration: 1.2,
+        easeLinearity: 0.25
+      });
+
+      // 2. Open popup
+      if (markersMap[areaId]) {
+        setTimeout(() => {
+          markersMap[areaId].openPopup();
+        }, 1250);
+      }
+
+      // 3. Update Right Sidebar Panel
+      document.getElementById("detail-name").innerText = area.name;
+      document.getElementById("detail-landmark").innerText = area.landmark;
+      document.getElementById("detail-zone").innerText = area.zone;
+      document.getElementById("detail-ward").innerText = `${area.category} Node`;
+      document.getElementById("detail-elevation").innerText = `${area.elevation} (Cartosat 30m DEM)`;
+      document.getElementById("detail-drainage").innerText = `Normal (${area.drainage})`;
+      document.getElementById("detail-img").src = area.image;
+
+      const banner = document.getElementById("detail-risk-banner");
+      const bannerText = document.getElementById("detail-risk-text");
+      if (area.category === "Chokepoint") {
+        banner.className = "risk-pill-banner moderate";
+        bannerText.innerText = "Low Bowl / Underpass Monitoring";
+        document.getElementById("detail-advisory").innerText = "Sump pumps on standby. Drainage lines clear and monitored.";
+      } else {
+        banner.className = "risk-pill-banner";
+        bannerText.innerText = "Normal (Dry)";
+        document.getElementById("detail-advisory").innerText = "Approach roads and drainage network operating normally. No waterlogging.";
+      }
+
+      document.getElementById("search-suggestions").style.display = "none";
+    }
+
+    // LIVE SEARCH HANDLER WITH AUTOCOMPLETE
+    function handleLiveSearch(query) {
+      const q = query.toLowerCase().trim();
+      const container = document.getElementById("search-suggestions");
+
+      if (!q) {
+        container.style.display = "none";
+        return;
+      }
+
+      const matches = JAIPUR_70_AREAS.filter(area => 
+        area.name.toLowerCase().includes(q) || 
+        area.landmark.toLowerCase().includes(q) || 
+        area.category.toLowerCase().includes(q)
+      );
+
+      if (matches.length > 0) {
+        container.innerHTML = matches.slice(0, 8).map(area => `
+          <div class="suggestion-row" onclick="zoomToSelectedAreaById('${area.id}')">
+            <strong>${area.name}</strong>
+            <small>${area.landmark} (${area.category})</small>
+          </div>
+        `).join('');
+        container.style.display = "block";
+      } else {
+        container.innerHTML = `<div style="padding: 10px; color: #64748b; font-size: 0.75rem;">No matching location found in Jaipur.</div>`;
+        container.style.display = "block";
+      }
+    }
+
+    // Press Enter to Zoom to first match
+    document.getElementById("ward-search-input").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        const q = this.value.toLowerCase().trim();
+        const target = JAIPUR_70_AREAS.find(area => 
+          area.name.toLowerCase().includes(q) || 
+          area.landmark.toLowerCase().includes(q)
+        );
+        if (target) {
+          zoomToSelectedAreaById(target.id);
+        }
+      }
+    });
+
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest(".map-floating-search")) {
+        document.getElementById("search-suggestions").style.display = "none";
+      }
+    });
+
+    // Reset Map Center
+    function resetMapCenter() {
+      map.flyTo([26.8950, 75.8000], 12, { duration: 1 });
+      document.getElementById("search-suggestions").style.display = "none";
+    }
+
+    // Switch Base Map Style (Dark Radar vs Real Satellite) - ZERO API KEYS NEEDED
+    function toggleBaseTileStyle() {
+      isDarkRadar = !isDarkRadar;
+      const mapDiv = document.getElementById("leaflet-map");
+      const label = document.getElementById("carto-label");
+
+      if (isDarkRadar) {
+        // Dark Radar (OpenStreetMap + CSS Filter)
+        mapDiv.className = "dark-radar-mode";
+        baseTiles.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+        label.innerText = "Dark Radar Mode";
+      } else {
+        // High-Resolution Satellite (Esri ArcGIS World Imagery - Free)
+        mapDiv.className = "";
+        baseTiles.setUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        label.innerText = "Real Satellite Mode";
+      }
+    }
+
+    // Switch Toolbar Mode Tabs
+    function switchLayerMode(mode) {
+      document.querySelectorAll(".mode-tab").forEach(tab => tab.classList.remove("active"));
+      if (event) event.currentTarget.classList.add("active");
+
+      if (mode === 'radar') {
+        map.addLayer(radarOverlayLayer);
+        map.addLayer(inundationLayerGroup);
+        map.addLayer(markersLayerGroup);
+      } else if (mode === 'inundation') {
+        map.removeLayer(radarOverlayLayer);
+        map.addLayer(inundationLayerGroup);
+      } else if (mode === 'river') {
+        map.flyTo([26.8400, 75.7700], 13);
+      } else if (mode === 'aws') {
+        map.flyTo([26.8289, 75.8056], 14);
+      }
+    }
+
+    // Toggle Map Checkbox Layers
+    function toggleMapLayer(layer) {
+      if (layer === 'radar') {
+        const c = document.getElementById("check-radar").checked;
+        if (c) map.addLayer(radarOverlayLayer); else map.removeLayer(radarOverlayLayer);
+      } else if (layer === 'inundation') {
+        const c = document.getElementById("check-inundation").checked;
+        if (c) map.addLayer(inundationLayerGroup); else map.removeLayer(inundationLayerGroup);
+      } else if (layer === 'river') {
+        const c = document.getElementById("check-river").checked;
+        if (c) map.addLayer(riverLayer); else map.removeLayer(riverLayer);
+      } else if (layer === 'aws') {
+        const c = document.getElementById("check-aws").checked;
+        if (c) map.addLayer(markersLayerGroup); else map.removeLayer(markersLayerGroup);
+      }
+    }
+
+    // Timeline Scrubber Playback
+    function toggleTimelinePlay() {
+      timelinePlaying = !timelinePlaying;
+      const btn = document.getElementById("play-pause-btn");
+      if (timelinePlaying) {
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+        timelineTimer = setInterval(stepTimeline, 1500);
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        clearInterval(timelineTimer);
+      }
+    }
+
+    function stepTimeline() {
+      currentTimelineStep = (currentTimelineStep + 1) % 7;
+      updateTimelinePin();
+    }
+
+    function resetTimeline() {
+      currentTimelineStep = 0;
+      updateTimelinePin();
+      if (timelinePlaying) toggleTimelinePlay();
+    }
+
+    function seekTimeline(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = clickX / rect.width;
+      currentTimelineStep = Math.round(pct * 6);
+      updateTimelinePin();
+    }
+
+    function updateTimelinePin() {
+      const pin = document.getElementById("timeline-thumb-pin");
+      const pct = (currentTimelineStep / 6) * 100;
+      pin.style.left = `${pct}%`;
+    }
+
+    // Open-Meteo Real-Time Weather Fetch (Zero Fake Risk)
+    async function syncOpenMeteoLive() {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=26.9124&longitude=75.7873&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&timezone=Asia%2FKolkata");
+        const d = await res.json();
+        if (d && d.current) {
+          const temp = d.current.temperature_2m;
+          const humidity = d.current.relative_humidity_2m;
+          const wind = d.current.wind_speed_10m;
+          const rain = d.current.precipitation || 0.0;
+
+          document.getElementById("head-temp").innerText = `${temp.toFixed(1)}°C`;
+          document.getElementById("head-humidity").innerText = `${humidity}%`;
+          document.getElementById("head-wind").innerText = `${wind} km/h`;
+          document.getElementById("head-cond").innerText = rain > 0 ? "Rain Observed" : "Partly Cloudy";
+
+          document.getElementById("detail-rain").innerText = `${rain.toFixed(1)} mm/h`;
+          document.getElementById("detail-inundation").innerText = rain > 0 ? "10 – 25 cm" : "0 cm";
+        }
+      } catch (err) {
+        console.warn("Weather Telemetry Sync Issue:", err);
+      }
+    }
+
+    function refreshLiveData() {
+      syncOpenMeteoLive();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initJaipurMapEngine();
+    });
+  </script>
+</body>
+</html>

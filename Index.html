@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-driven hyper-local early warning system for secure weather nowcasting | SIH 2026</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Top Global Header -->
+  <header class="top-header">
+    <div class="brand-container">
+      <i class="fa-solid fa-cloud-bolt brand-icon"></i>
+      <div>
+        <!-- Replaced Title with User Requested Title -->
+        <div class="brand-title">HYPER-LOCAL <span>EARLY WARNING</span></div>
+        <div class="brand-subtitle">AI-driven hyper-local early warning system for secure weather nowcasting</div>
+      </div>
+      <div class="badge-group">
+        <span class="badge primary">SIH26077</span>
+        <span class="badge live"><span class="pulse-dot"></span> LIVE DWR FEED</span>
+      </div>
+    </div>
+
+    <div class="quick-stats">
+      <div class="stat-item">
+        <i class="fa-solid fa-location-dot"></i>
+        <div><strong id="header-loc-name">Jaipur Urban</strong> <br><small>26.91° N, 75.78° E</small></div>
+      </div>
+      <div class="stat-item">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <div><strong id="header-temp">--°C</strong> <br><small id="header-condition">Checking...</small></div>
+      </div>
+      <div class="stat-item">
+        <i class="fa-solid fa-droplet"></i>
+        <div><strong id="header-humidity">--%</strong> <br><small>Humidity</small></div>
+      </div>
+      <div class="stat-item">
+        <i class="fa-solid fa-wind"></i>
+        <div><strong id="header-wind">-- km/h</strong> <br><small>Wind Speed</small></div>
+      </div>
+      <div class="stat-item clock-item">
+        <i class="fa-regular fa-clock"></i>
+        <div><strong id="live-clock">14:32:18</strong> <br><small>IST Live</small></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link active"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="area.html" class="nav-link"><i class="fa-solid fa-location-crosshairs"></i> Area Details</a>
+        <a href="map.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Map View</a>
+        <a href="alert.html" class="nav-link"><i class="fa-solid fa-bell"></i> Alerts & Notifications</a>
+        <a href="about.html" class="nav-link"><i class="fa-solid fa-circle-info"></i> About</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="slogan">Safer Jaipur<br>Stronger Tomorrow</div>
+        <div class="sih-tag">
+          <i class="fa-solid fa-microchip"></i>
+          <div><strong>SIH 2026</strong><br><small>Innovation for a Safer India</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-left">
+          <h1>Real-Time Weather Insights for a <span>Safer Jaipur</span></h1>
+          <p>AI-driven hyper-local early warning system for secure weather nowcasting. Early detection, risk analysis and timely alerts to reduce impact of severe weather events.</p>
+          
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="area-search" placeholder="Search Jaipur Wards, Sikar Rd, Mansarovar...">
+            <button id="search-btn"><i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+
+          <div class="popular-tags">
+            <span>Popular Areas:</span>
+            <button class="tag-btn" onclick="switchLocation('sikar_road')">Sikar Road</button>
+            <button class="tag-btn" onclick="switchLocation('mansarovar')">Mansarovar</button>
+            <button class="tag-btn" onclick="switchLocation('malviya_nagar')">Malviya Nagar</button>
+            <button class="tag-btn" onclick="switchLocation('vaishali_nagar')">Vaishali Nagar</button>
+            <button class="tag-btn" onclick="switchLocation('jhotwara')">Jhotwara</button>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="sector-alert-box" id="sector-alert-card">
+            <div class="alert-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="alert-details">
+              <span class="sector-tag">SECTOR STATUS: <b id="highlight-sector-name">JAIPUR URBAN</b></span>
+              <h3 id="highlight-risk-status">Monitoring Live Weather...</h3>
+            </div>
+          </div>
+          <button class="dispatch-btn" onclick="location.href='alert.html'">
+            <i class="fa-solid fa-paper-plane"></i> Dispatch CAP Alert
+          </button>
+        </div>
+      </section>
+
+      <!-- 5 Metric Cards -->
+      <section class="metric-grid">
+        <div class="card metric-card">
+          <div class="card-icon blue"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+          <div class="metric-label">Current Rainfall</div>
+          <div class="metric-val" id="metric-rainfall">0.0 <small>mm/h</small></div>
+          <div class="metric-sub" id="metric-rain-source">Real-Time Sensor Feed</div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="card-icon cyan"><i class="fa-solid fa-water"></i></div>
+          <div class="metric-label">Inundation Level</div>
+          <div class="metric-val" id="metric-inundation">0 <small>cm</small></div>
+          <div class="metric-sub" id="metric-inundation-sub">No waterlogging detected</div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="card-icon orange"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="metric-label">Risk Level</div>
+          <div class="metric-val" id="metric-risk">Normal</div>
+          <div class="risk-meter" id="risk-meter">
+            <span class="bar active-green"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="card-icon red"><i class="fa-solid fa-temperature-half"></i></div>
+          <div class="metric-label">Temperature</div>
+          <div class="metric-val" id="metric-temp">-- <small>°C</small></div>
+          <div class="metric-sub">Surface Ambient Temp</div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="card-icon teal"><i class="fa-solid fa-wind"></i></div>
+          <div class="metric-label">Wind Speed</div>
+          <div class="metric-val" id="metric-wind">-- <small>km/h</small></div>
+          <div class="metric-sub" id="metric-wind-dir">Direction: NW</div>
+        </div>
+      </section>
+
+      <!-- Lower Dashboard 3 Columns -->
+      <section class="details-grid" id="area-details-sec">
+        <!-- Col 1: Selected Area Details -->
+        <div class="card area-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-location-pin"></i> Selected Area Details</h3>
+            <a href="map.html" class="link-btn">View Map</a>
+          </div>
+          
+          <div class="area-profile">
+            <div class="area-img-box">
+              <img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?w=500&auto=format&fit=crop&q=60" alt="Jaipur Area" id="area-img">
+            </div>
+            <div>
+              <h2 id="area-title">Sikar Road</h2>
+              <p class="subtitle" id="area-landmark">(Alka Cinema / Dadi Phatak)</p>
+              <p class="zone-info">Zone: <span id="area-zone">JMC Greater</span></p>
+              <p class="zone-info">Catchment: <span id="area-ward">Ward 14 & 15</span></p>
+            </div>
+          </div>
+
+          <div class="info-list">
+            <div class="info-row">
+              <span><i class="fa-solid fa-triangle-exclamation"></i> Risk Level</span>
+              <span class="status-tag" id="area-risk-tag">Normal</span>
+            </div>
+            <div class="info-row">
+              <span><i class="fa-solid fa-cloud-rain"></i> Rainfall Rate</span>
+              <strong id="area-rain-rate">0.0 mm/h</strong>
+            </div>
+            <div class="info-row">
+              <span><i class="fa-solid fa-water"></i> Waterlogging</span>
+              <strong id="area-waterlog">0 cm</strong>
+            </div>
+            <div class="info-row">
+              <span><i class="fa-solid fa-mountain"></i> Elevation</span>
+              <strong id="area-elevation">418 m (Low Bowl)</strong>
+            </div>
+            <div class="info-row">
+              <span><i class="fa-solid fa-faucet-drip"></i> Drainage Capacity</span>
+              <strong class="text-warning" id="area-drainage">Normal (Amanishah Outfall)</strong>
+            </div>
+            <div class="advisory-box">
+              <i class="fa-solid fa-bullhorn"></i>
+              <div>
+                <strong>Advisory:</strong>
+                <p id="area-advisory">No severe weather risk currently detected in this sector.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 2: Precipitation Nowcast & Sensors -->
+        <div class="card chart-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-chart-line"></i> Precipitation Nowcast (0 – 180m)</h3>
+            <span class="badge secondary">PredRNN-v2 AI</span>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="nowcastChart"></canvas>
+          </div>
+
+          <div class="sensor-section">
+            <div class="sensor-header">
+              <h4>Sensor Data</h4>
+              <span class="status-online"><i class="fa-solid fa-circle"></i> Operational</span>
+            </div>
+            <div class="sensor-row">
+              <span><i class="fa-solid fa-satellite-dish"></i> IMD Jaipur DWR</span>
+              <strong>5.5 cm C-Band</strong>
+            </div>
+            <div class="sensor-row">
+              <span><i class="fa-solid fa-satellite"></i> INSAT-3DS TIR1</span>
+              <strong id="sensor-temp">-62.4°C</strong>
+            </div>
+          </div>
+
+          <div class="layer-toggles">
+            <h4>Map Layers</h4>
+            <label class="checkbox-row"><input type="checkbox" checked> Doppler Radar (dBZ)</label>
+            <label class="checkbox-row"><input type="checkbox" checked> Inundation Hazard Zones</label>
+            <label class="checkbox-row"><input type="checkbox"> Dravyavati River Basin</label>
+          </div>
+        </div>
+
+        <!-- Col 3: Recent Alerts & Live Feed -->
+        <div class="card alerts-col-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-bell"></i> Recent Alerts</h3>
+            <a href="alert.html" class="link-btn">View All</a>
+          </div>
+
+          <div class="recent-alerts-list" id="recent-alerts-container">
+            <!-- Dynamic alerts injected by script.js -->
+          </div>
+
+          <div class="card-header mt-4">
+            <h3><i class="fa-solid fa-tower-broadcast"></i> Latest Weather Updates</h3>
+          </div>
+          <div class="updates-timeline" id="live-updates-timeline">
+            <!-- Dynamic updates injected by script.js -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bottom Global Status Footer -->
+  <footer class="bottom-footer">
+    <div class="footer-left">
+      AI-DRIVEN HYPER-LOCAL EARLY WARNING SYSTEM &nbsp;|&nbsp; SIH2026 &nbsp;|&nbsp; MoES / IMD &nbsp;|&nbsp; ISRO
+    </div>
+    <div class="footer-right">
+      <span>Latency: <strong>14.8s</strong></span>
+      <span>Resolution: <strong>500m / 5min</strong></span>
+      <span class="online-indicator"><i class="fa-solid fa-circle"></i> System Online</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIH-2026: NOWCAST AI | Citizen SMS Alert & Emergency Dispatch</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #050b14;
+      --bg-card: #0c1626;
+      --border-color: #172a46;
+      --accent-blue: #0284c7;
+      --accent-cyan: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --risk-green: #10b981;
+      --risk-amber: #f59e0b;
+      --risk-red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Global Header */
+    .top-header {
+      background-color: #08101e;
+      border-bottom: 1px solid var(--border-color);
+      height: 64px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { font-size: 1.8rem; color: #f59e0b; }
+    .brand-title { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; }
+    .brand-title span { color: var(--accent-cyan); }
+    .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); }
+    .badge-group { display: flex; gap: 8px; margin-left: 12px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; }
+    .badge.sih { background: #1d4ed8; color: #fff; }
+    .badge.cap { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+
+    .top-stats-bar { display: flex; align-items: center; gap: 16px; }
+    .top-stat { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; border-right: 1px solid #1e293b; padding-right: 14px; }
+    .top-stat:last-child { border-right: none; padding-right: 0; }
+    .top-stat i { font-size: 1.1rem; color: var(--accent-cyan); }
+
+    /* Layout Skeleton */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 210px;
+      background-color: #070d18;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+    .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background-color: #10233f; color: #38bdf8; }
+    .sidebar-brand-card { text-align: center; border-top: 1px solid var(--border-color); padding-top: 12px; }
+    .slogan-txt { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-bottom: 10px; }
+    .sih-cube { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Workspace */
+    .main-workspace {
+      flex: 1;
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 18px;
+      overflow-y: auto;
+      align-items: flex-start;
+    }
+
+    .card-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #172a46;
+      padding-bottom: 10px;
+    }
+    .panel-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    /* Form Fields */
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .form-control-custom {
+      background-color: #08111e;
+      border: 1px solid #1e3a61;
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-control-custom:focus { border-color: #0284c7; }
+
+    .btn-register-sms {
+      background: linear-gradient(90deg, #0284c7 0%, #0369a1 100%);
+      border: none;
+      color: white;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: transform 0.2s;
+    }
+    .btn-register-sms:hover { transform: translateY(-1px); }
+
+    .btn-trigger-test {
+      background: #78350f;
+      border: 1px solid #f59e0b;
+      color: #fde68a;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-trigger-test:hover { background: #b45309; }
+
+    /* Registered Citizens Live Directory */
+    .subscribers-table-box {
+      background: #091220;
+      border: 1px solid #172a46;
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 170px;
+      overflow-y: auto;
+    }
+    .sub-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #172a46;
+      font-size: 0.74rem;
+    }
+    .sub-item-row:last-child { border-bottom: none; }
+
+    /* RIGHT COLUMN STYLING */
+    .right-column-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* TELECOM GATEWAY TELEMETRY HUD (The New Top Box) */
+    .telecom-hud-card {
+      background: linear-gradient(135deg, #091424 0%, #060e1a 100%);
+      border: 1px solid #1e3a61;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .telecom-hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #162942;
+      padding-bottom: 8px;
+    }
+    .telecom-hud-header h4 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pulse-indicator-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.68rem;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid #059669;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .telecom-metrics-quad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .telecom-stat-box {
+      background: #08111e;
+      border: 1px solid #172a46;
+      border-radius: 6px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .telecom-stat-box small {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .telecom-stat-box strong {
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .telecom-channel-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #070e1b;
+      border: 1px solid #13243a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+    }
+    .signal-wave-bars {
+      display: flex;
+      gap: 3px;
+      align-items: flex-end;
+      height: 12px;
+    }
+    .signal-wave-bars span {
+      width: 3px;
+      background: #0284c7;
+      border-radius: 1px;
+    }
+    .signal-wave-bars span:nth-child(1) { height: 4px; }
+    .signal-wave-bars span:nth-child(2) { height: 7px; }
+    .signal-wave-bars span:nth-child(3) { height: 10px; }
+    .signal-wave-bars span:nth-child(4) { height: 12px; background: #38bdf8; }
+
+    /* SMARTPHONE SIMULATOR CONTAINER */
+    .phone-simulator-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .smartphone-chassis {
+      width: 310px;
+      height: 480px;
+      background: #020617;
+      border: 9px solid #1e293b;
+      border-radius: 34px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      margin-top: 8px;
+    }
+    .phone-notch {
+      width: 110px;
+      height: 18px;
+      background: #1e293b;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-left-radius: 10px;
+      border-bottom-right-radius: 10px;
+      z-index: 10;
+    }
+    .phone-top-bar {
+      height: 32px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.68rem;
+      color: #94a3b8;
+      z-index: 5;
+    }
+    .phone-screen {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: linear-gradient(180deg, #091322 0%, #030712 100%);
+      overflow-y: auto;
+    }
+
+    /* Lockscreen Emergency Pop-up Banner */
+    .emergency-sms-bubble {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      animation: alertPulse 1.2s infinite alternate;
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+    }
+    @keyframes alertPulse {
+      0% { border-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+      100% { border-color: #f87171; box-shadow: 0 0 18px rgba(239, 68, 68, 0.6); }
+    }
+
+    .sms-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      color: #fca5a5;
+      font-weight: 700;
+    }
+    .sms-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .sms-body {
+      font-size: 0.72rem;
+      color: #fecaca;
+      line-height: 1.35;
+    }
+    .sms-footer {
+      font-size: 0.62rem;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    /* Standard SMS Thread messages */
+    .standard-sms-bubble {
+      background: #111e33;
+      border: 1px solid #1e3a61;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Bottom Bar */
+    .global-bottom-bar {
+      height: 32px;
+      background: #060c17;
+      border-top: 1px solid var(--border-color);
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Header -->
+  <header class="top-header">
+    <div class="brand-box">
+      <i class="fa-solid fa-triangle-exclamation brand-icon"></i>
+      <div>
+        <div class="brand-title">SIH-2026: <span>NOWCAST AI</span></div>
+        <div class="brand-subtitle">Citizen Early Warning SMS Network & Emergency Dispatch</div>
+      </div>
+      <div class="badge-group">
+        <span class="badge sih">SIH26077</span>
+        <span class="badge cap"><i class="fa-solid fa-tower-cell"></i> SMS GATEWAY LIVE</span>
+      </div>
+    </div>
+
+    <div class="top-stats-bar">
+      <div class="top-stat">
+        <i class="fa-solid fa-location-dot"></i>
+        <div><strong>Jaipur Metropolitan</strong><br><small>70 Catchment Nodes</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <div><strong id="head-temp">31.4°C</strong><br><small id="head-cond">Checking Live...</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-regular fa-clock"></i>
+        <div><strong id="live-clock">14:32:18</strong><br><small>IST Live</small></div>
+      </div>
+      <a href="index.html" class="dispatch-btn" style="padding: 6px 14px; font-size: 0.8rem; background: #0284c7; color: white; text-decoration: none; border-radius: 6px;">
+        <i class="fa-solid fa-arrow-left"></i> Dashboard
+      </a>
+      <a href="map.html" class="dispatch-btn" style="padding: 6px 14px; font-size: 0.8rem; background: #1e3a61; color: white; text-decoration: none; border-radius: 6px;">
+        <i class="fa-solid fa-map"></i> View Map
+      </a>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="nav-list">
+        <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="area.html" class="nav-item"><i class="fa-solid fa-location-crosshairs"></i> Area Details</a>
+        <a href="map.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> Map View</a>
+        <a href="alert.html" class="nav-item active"><i class="fa-solid fa-bell"></i> Alerts & Notifications</a>
+        <a href="about.html" class="nav-item"><i class="fa-solid fa-circle-info"></i> About</a>
+      </nav>
+
+      <div class="sidebar-brand-card">
+        <div class="slogan-txt">Safer Jaipur<br>Stronger Tomorrow</div>
+        <div class="sih-cube">
+          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); font-size: 1.2rem;"></i>
+          <div style="text-align: left;"><strong>Public Early Warning</strong><br><small>Zero Casualty Mission</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-workspace">
+      <!-- Left Panel: Registration & Gateway Controls -->
+      <div class="card-panel">
+        <div class="panel-header">
+          <h3><i class="fa-solid fa-mobile-screen-button" style="color: #38bdf8;"></i> Citizen SMS Alert Subscription</h3>
+          <span style="font-size: 0.72rem; color: #10b981;"><i class="fa-solid fa-tower-broadcast"></i> Cell Broadcast Enabled</span>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+          Aam nagrik apna mobile number aur area choose karke alerts enable kar sakte hain. Jaise hi us area me 
+          cloudburst ya severe waterlogging aayegi, turant unhe Hindi/English me SMS alert bhej diya jayega[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span).
+        </p>
+
+        <!-- Citizen Subscription Form -->
+        <form id="citizen-sms-form" onsubmit="handleCitizenRegistration(event)" style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label>Mobile Number (SMS Alert Target)</label>
+              <input type="tel" id="citizen-phone-input" class="form-control-custom" placeholder="+91 98290 XXXXX" value="+91 98290 12345" required>
+            </div>
+            <div class="form-group">
+              <label>Citizen / Student Name</label>
+              <input type="text" id="citizen-name-input" class="form-control-custom" placeholder="e.g., Kunal Saini" value="Kunal Saini" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label><span>Select Your Monitored Area / Ward</span> <small style="color: #38bdf8;">70+ Locations</small></label>
+            <select id="citizen-ward-select" class="form-control-custom">
+              <optgroup label="Colleges & Universities">
+                <option value="Poornima College of Engineering" selected>Poornima College of Engineering (Sitapura)</option>
+                <option value="Poornima University">Poornima University (Ramchandrapura)</option>
+                <option value="University of Rajasthan (RU)">University of Rajasthan (RU JLN Marg)</option>
+                <option value="MNIT Jaipur">MNIT Jaipur (Malviya Nagar)</option>
+                <option value="JECRC Foundation & University">JECRC Foundation & University (Sitapura)</option>
+              </optgroup>
+              <optgroup label="Hospitals & Healthcare Hubs">
+                <option value="Mahatma Gandhi Hospital & Medical College">Mahatma Gandhi Hospital (Sitapura)</option>
+                <option value="SMS Hospital (Sawai Man Singh)">SMS Hospital (Sawai Man Singh)</option>
+                <option value="Fortis Escorts Hospital">Fortis Escorts Hospital (JLN Marg)</option>
+                <option value="EHCC Hospital">EHCC Hospital (Jawahar Circle)</option>
+              </optgroup>
+              <optgroup label="Airport, Transit & Railway Stations">
+                <option value="Jaipur International Airport (JAI)">Jaipur International Airport (Sanganer)</option>
+                <option value="Jaipur Junction Railway Station">Jaipur Junction Railway Station</option>
+                <option value="Gandhinagar Railway Station">Gandhinagar Railway Station</option>
+                <option value="Durgapura Railway Station">Durgapura Railway Station</option>
+              </optgroup>
+              <optgroup label="Critical Underpasses & High Risk Low-Bowls">
+                <option value="Sikar Road (Alka Cinema Underpass)">Sikar Road (Alka Cinema / Dadi Phatak)</option>
+                <option value="Panipech Underpass">Panipech Underpass (Jhotwara)</option>
+                <option value="B2 Bypass Underpass">B2 Bypass Underpass (Tonk Road Crossing)</option>
+                <option value="Gopalpura Bypass Puliya">Gopalpura Bypass Puliya (Gujjar Ki Thadi)</option>
+              </optgroup>
+              <optgroup label="Residential & Commercial Wards">
+                <option value="Mansarovar (VT Road & City Park)">Mansarovar (VT Road & City Park)</option>
+                <option value="Malviya Nagar (Calgiri Road & GT)">Malviya Nagar (Calgiri & GT)</option>
+                <option value="Vaishali Nagar (Amrapali Circle)">Vaishali Nagar (Amrapali Circle)</option>
+                <option value="Jagatpura (Mahal Road / Akshay Patra)">Jagatpura (Mahal Road / Akshay Patra)</option>
+                <option value="Sitapura Industrial Area">Sitapura Industrial Area</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button type="submit" class="btn-register-sms" style="flex:1;">
+              <i class="fa-solid fa-bell"></i> Activate Live SMS Alerts
+            </button>
+            <button type="button" class="btn-trigger-test" onclick="triggerTestAlertToCitizen()">
+              <i class="fa-solid fa-bolt"></i> Simulate Sudden Rain SMS (SIH Demo)
+            </button>
+          </div>
+        </form>
+
+        <div id="sub-success-banner" style="display:none; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; padding: 8px 12px; border-radius: 6px; font-size: 0.76rem;">
+          <i class="fa-solid fa-circle-check"></i> Registration Active! Mobile linked to IMD Jaipur Radar Feed. Emergency SMS will be dispatched automatically if rain breaches 15 mm/h[span_2](start_span)[span_2](end_span).
+        </div>
+
+        <!-- Active Subscribed Directory -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h4 style="font-size:0.8rem; color:#cbd5e1;"><i class="fa-solid fa-users"></i> Active Citizen Subscriptions (Local Node)</h4>
+            <span style="font-size:0.68rem; color:var(--text-muted);" id="sub-count-tag">3 Citizens Registered</span>
+          </div>
+          <div class="subscribers-table-box" id="subscribers-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Telecom Gateway HUD + Smartphone Screen Simulator -->
+      <div class="right-column-stack">
+        
+        <!-- NEW TELECOM GATEWAY TELEMETRY HUD (Covers empty space cleanly) -->
+        <div class="telecom-hud-card">
+          <div class="telecom-hud-header">
+            <h4><i class="fa-solid fa-tower-broadcast"></i> Cell Broadcast & Siren Gateway</h4>
+            <div class="pulse-indicator-badge">
+              <span class="pulse-dot"></span> TOWER MESH LIVE
+            </div>
+          </div>
+
+          <!-- 4 Telecom KPI Counters -->
+          <div class="telecom-metrics-quad">
+            <div class="telecom-stat-box">
+              <small>Towers Linked</small>
+              <strong>142</strong>
+            </div>
+            <div class="telecom-stat-box">
+              <small>Latency</small>
+              <strong style="color: #38bdf8;">2.4s</strong>
+            </div>
+            <div class="telecom-stat-box">
+              <small>Dispatched</small>
+              <strong>1,840</strong>
+            </div>
+            <div class="telecom-stat-box">
+              <small>Sirens Grid</small>
+              <strong style="color: #34d399;">24 / 24</strong>
+            </div>
+          </div>
+
+          <!-- Live Channel Bar -->
+          <div class="telecom-channel-bar">
+            <span>Protocol: <strong>Cell Broadcast 4370 (CAP-v1.2)</strong></span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="color:#38bdf8; font-size:0.68rem;">Carrier Uplink 99.8%</span>
+              <div class="signal-wave-bars">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SMARTPHONE SIMULATOR -->
+        <div class="phone-simulator-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:6px;">
+            <div>
+              <h3 style="font-size:0.88rem; font-weight:700;"><i class="fa-solid fa-satellite-dish" style="color:#f59e0b;"></i> Citizen Phone Simulation</h3>
+              <small style="color:var(--text-muted); font-size:0.68rem;">Live preview of incoming NDMA / JMC Emergency SMS</small>
+            </div>
+            <button onclick="clearPhoneScreen()" style="background:#091220; border:1px solid #1e3a61; color:#94a3b8; font-size:0.68rem; padding:4px 8px; border-radius:4px; cursor:pointer;">
+              <i class="fa-solid fa-trash-can"></i> Clear
+            </button>
+          </div>
+
+          <!-- Smartphone Body -->
+          <div class="smartphone-chassis">
+            <div class="phone-notch"></div>
+            
+            <div class="phone-top-bar">
+              <span id="phone-clock">16:48</span>
+              <div style="display:flex; gap:5px; align-items:center;">
+                <i class="fa-solid fa-signal"></i>
+                <i class="fa-solid fa-wifi"></i>
+                <i class="fa-solid fa-battery-full"></i>
+              </div>
+            </div>
+
+            <!-- Inside Phone Screen -->
+            <div class="phone-screen" id="phone-messages-stream">
+              <!-- Initial Welcome SMS -->
+              <div class="standard-sms-bubble">
+                <strong style="color:#38bdf8; font-size:0.72rem;">JMC-NOWCAST-ALERT</strong>
+                <p>Welcome! Aapka number <strong>Poornima College of Engineering</strong> ward me active ho gaya hai. Achanak barish ya jal-bharav hone par turant SMS prapt hoga[span_3](start_span)[span_3](end_span).</p>
+                <span style="font-size:0.62rem; color:#64748b; text-align:right;">Today • Live</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Footer -->
+  <footer class="global-bottom-bar">
+    <div>SIH-2026: NOWCAST AI &nbsp;|&nbsp; SIH26077 &nbsp;|&nbsp; MoES / IMD &nbsp;|&nbsp; ISRO</div>
+    <div style="display: flex; gap: 15px;">
+      <span><i class="fa-solid fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> SMS Delivery Latency: <strong>&lt; 2.4s</strong></span>
+      <span>Telecom Protocol: <strong>Cell Broadcast 4370</strong></span>
+    </div>
+  </footer>
+
+  <script>
+    // Subscribed Citizens In-Memory Database
+    let registeredCitizens = [
+      { name: "Kunal Saini", phone: "+91 98290 12345", ward: "Poornima College of Engineering", status: "Active" },
+      { name: "Aditya Sharma", phone: "+91 94140 88219", ward: "Sikar Road (Alka Cinema Underpass)", status: "Active" },
+      { name: "Pooja Verma", phone: "+91 97820 44531", ward: "Mahatma Gandhi Hospital & Medical College", status: "Active" }
+    ];
+
+    // Live Clock
+    function updateClock() {
+      const timeStr = new Date().toLocaleTimeString('en-IN', { hour12: false });
+      const el = document.getElementById("live-clock");
+      const phoneClock = document.getElementById("phone-clock");
+      if (el) el.innerText = timeStr;
+      if (phoneClock) phoneClock.innerText = timeStr.substring(0, 5);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Render Citizens List
+    function renderSubscribers() {
+      const container = document.getElementById("subscribers-list");
+      const countTag = document.getElementById("sub-count-tag");
+      if (!container) return;
+
+      countTag.innerText = `${registeredCitizens.length} Citizens Subscribed`;
+      container.innerHTML = registeredCitizens.map((c, i) => `
+        <div class="sub-item-row">
+          <div>
+            <strong style="color:#fff;">${c.name}</strong> (${c.phone})
+            <div style="color:var(--text-muted); font-size:0.68rem;"><i class="fa-solid fa-location-dot" style="color:#0284c7;"></i> ${c.ward}</div>
+          </div>
+          <span style="background:#064e3b; color:#34d399; font-weight:700; padding:2px 6px; border-radius:4px; font-size:0.65rem;">${c.status}</span>
+        </div>
+      `).join('');
+    }
+
+    // Handle Form Submit
+    function handleCitizenRegistration(e) {
+      e.preventDefault();
+      const phone = document.getElementById("citizen-phone-input").value;
+      const name = document.getElementById("citizen-name-input").value;
+      const ward = document.getElementById("citizen-ward-select").value;
+
+      registeredCitizens.unshift({ name, phone, ward, status: "Active" });
+      renderSubscribers();
+
+      const banner = document.getElementById("sub-success-banner");
+      banner.style.display = "block";
+      setTimeout(() => { banner.style.display = "none"; }, 5000);
+
+      playAudioTone(600, 0.1);
+      pushMessageToPhone(`
+        <div class="standard-sms-bubble" style="border-left: 3px solid #10b981;">
+          <strong style="color:#34d399; font-size:0.72rem;"><i class="fa-solid fa-shield-check"></i> ALERT SERVICE ACTIVATED</strong>
+          <p>Namaste ${name}! Aapka number successfully <strong>${ward}</strong> ke liye register ho gaya hai. Achanak cloudburst ya jal-bharav hone par direct alert aayega[span_4](start_span)[span_4](end_span)[span_5](start_span)[span_5](end_span).</p>
+          <span style="font-size:0.62rem; color:#64748b; text-align:right;">Just Now • SMS Gateway</span>
+        </div>
+      `);
+    }
+
+    // Play Authentic Emergency Alert Siren / Beep
+    function playAudioTone(freq, duration) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {
+        console.log("Audio alert blocked by browser policy");
+      }
+    }
+
+    // Push Message into Virtual Smartphone
+    function pushMessageToPhone(htmlContent) {
+      const stream = document.getElementById("phone-messages-stream");
+      if (stream) {
+        stream.innerHTML = htmlContent + stream.innerHTML;
+      }
+    }
+
+    // Trigger Test Cloudburst Emergency SMS (SIH 2026 Presentation Demo)
+    function triggerTestAlertToCitizen() {
+      const ward = document.getElementById("citizen-ward-select").value;
+      const phone = document.getElementById("citizen-phone-input").value;
+      const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      playAudioTone(880, 0.2);
+      setTimeout(() => playAudioTone(880, 0.3), 250);
+
+      const emergencySMS = `
+        <div class="emergency-sms-bubble">
+          <div class="sms-header">
+            <span><i class="fa-solid fa-triangle-exclamation"></i> GOVT OF RAJASTHAN - JMC DISASTER CELL</span>
+            <span>${now}</span>
+          </div>
+          <div class="sms-title">🚨 SEVERE WEATHER WARNING: ${ward.toUpperCase()}</div>
+          <div class="sms-body">
+            <strong>IMD Doppler Radar Alert:</strong> Agle 30–45 minute me aapke area (<strong>${ward}</strong>) me <strong>45 mm/h</strong> tez barish aur <strong>35–50 cm</strong> jal-bharav ki aashanka hai[span_6](start_span)[span_6](end_span)[span_7](start_span)[span_7](end_span)!<br><br>
+            ⚠️ <strong>Advisory:</strong> Low-lying underpass me gaadi na le jayein. Safe alternate road ka prayog karein. Nagar Nigam dewatering pump squad rawana kar di gayi hai[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span).
+          </div>
+          <div class="sms-footer">
+            <span>Delivered via Cell Broadcast to ${phone}</span>
+            <span>CAP-v1.2</span>
+          </div>
+        </div>
+      `;
+
+      pushMessageToPhone(emergencySMS);
+    }
+
+    function clearPhoneScreen() {
+      document.getElementById("phone-messages-stream").innerHTML = `
+        <div style="text-align:center; padding:20px; color:#64748b; font-size:0.72rem;">
+          Screen cleared. Waiting for live radar trigger...
+        </div>
+      `;
+    }
+
+    // Auto-sync real live weather for header
+    async function syncHeaderWeather() {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=26.9124&longitude=75.7873&current=temperature_2m,precipitation&timezone=Asia%2FKolkata");
+        const d = await res.json();
+        if (d && d.current) {
+          document.getElementById("head-temp").innerText = `${d.current.temperature_2m.toFixed(1)}°C`;
+          const rain = d.current.precipitation || 0.0;
+          document.getElementById("head-cond").innerText = rain > 0 ? "Rain Observed" : "Partly Cloudy";
+
+          if (rain > 15.0) {
+            triggerTestAlertToCitizen();
+          }
+        }
+      } catch (err) {
+        console.warn("Weather telemetry fetch error:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderSubscribers();
+      syncHeaderWeather();
+    });
+  </script>
+</body>
+</html>

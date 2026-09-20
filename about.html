@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About System | AI-driven hyper-local early warning system for secure weather nowcasting</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #050b14;
+      --bg-card: #0c1626;
+      --border-color: #172a46;
+      --accent-blue: #0284c7;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Header */
+    .top-header {
+      background-color: #08101e;
+      border-bottom: 1px solid var(--border-color);
+      height: 64px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .brand-box { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { font-size: 1.8rem; color: var(--accent-cyan); }
+    .brand-title { font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; }
+    .brand-title span { color: var(--accent-cyan); }
+    .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); }
+    .badge-group { display: flex; gap: 8px; margin-left: 12px; }
+    .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; }
+    .badge.sih { background: #1d4ed8; color: #fff; }
+    .badge.live { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+    .pulse-dot { display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981; margin-right: 4px; }
+
+    .top-stats-bar { display: flex; align-items: center; gap: 18px; }
+    .top-stat { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; border-right: 1px solid #1e293b; padding-right: 14px; }
+    .top-stat:last-child { border-right: none; padding-right: 0; }
+    .top-stat i { font-size: 1.1rem; color: var(--accent-cyan); }
+    .top-stat small { color: var(--text-muted); font-size: 0.68rem; }
+
+    /* App Layout */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 210px;
+      background-color: #070d18;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 12px;
+      flex-shrink: 0;
+    }
+    .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-item:hover, .nav-item.active { background-color: #10233f; color: #38bdf8; }
+    .sidebar-brand-card { text-align: center; border-top: 1px solid var(--border-color); padding-top: 12px; }
+    .slogan-txt { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-bottom: 10px; }
+    .sih-cube { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Main Content Container */
+    .main-about-scroll {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Top About Banner Bar */
+    .about-top-banner {
+      background: #091322;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .about-top-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .info-circle-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+    }
+    .about-title-text h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .about-title-text h1 span {
+      color: #38bdf8;
+    }
+    .about-title-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .about-top-right {
+      font-style: italic;
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dot-slider-bar {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .dot-slider-bar span {
+      height: 3px;
+      width: 14px;
+      background: #1e3a61;
+      border-radius: 2px;
+    }
+    .dot-slider-bar span.active {
+      background: #0284c7;
+      width: 24px;
+    }
+
+    /* Section 1: Overview & Monument Banner */
+    .overview-row-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 20px;
+    }
+    .card-dark {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .card-heading {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+    .card-heading i {
+      color: #38bdf8;
+    }
+    .overview-text {
+      font-size: 0.84rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .overview-text strong {
+      color: #fff;
+    }
+
+    .monument-banner-card {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      padding: 24px;
+      background: url('https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1000&auto=format&fit=crop&q=80') center/cover no-repeat;
+    }
+    .monument-banner-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(5, 11, 20, 0.88) 0%, rgba(5, 11, 20, 0.4) 100%);
+      z-index: 1;
+    }
+    .quote-overlay-box {
+      position: relative;
+      z-index: 2;
+    }
+    .quote-overlay-box h2 {
+      font-size: 1.45rem;
+      font-style: italic;
+      font-weight: 700;
+      color: #fff;
+    }
+    .quote-overlay-box h2 span {
+      color: #38bdf8;
+    }
+    .quote-arrow {
+      margin-top: 8px;
+      color: #38bdf8;
+      font-size: 1.1rem;
+    }
+
+    /* Section 2: Key Features & Mission/Vision */
+    .features-mission-grid {
+      display: grid;
+      grid-template-columns: 1.75fr 0.95fr;
+      gap: 20px;
+    }
+    .features-subgrid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .feature-item-card {
+      background: #091322;
+      border: 1px solid #172a46;
+      border-radius: 10px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-item-card:hover {
+      transform: translateY(-3px);
+      border-color: #0284c7;
+    }
+    .feature-icon-bubble {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+    .bubble-blue { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+    .bubble-purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+    .bubble-green { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .bubble-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .bubble-red { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .feature-item-card h4 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .feature-item-card p {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .mission-vision-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
+    }
+    .mv-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .mv-icon {
+      font-size: 1.4rem;
+      color: #38bdf8;
+      margin-top: 2px;
+    }
+    .mv-row h3 {
+      font-size: 0.95rem;
+      color: #fff;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .mv-row p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Section 3: Tech Stack & Project Details */
+    .tech-details-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+    }
+    .tech-subgrid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .tech-pill-card {
+      background: #091322;
+      border: 1px solid #172a46;
+      border-radius: 8px;
+      padding: 14px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+    .tech-logo-icon {
+      font-size: 1.6rem;
+      margin-bottom: 2px;
+    }
+    .icon-html { color: #f97316; }
+    .icon-css { color: #38bdf8; }
+    .icon-js { color: #facc15; }
+    .icon-tailwind { color: #06b6d4; }
+    .icon-leaflet { color: #22c55e; }
+    .icon-chartjs { color: #f43f5e; }
+
+    .tech-pill-card strong {
+      font-size: 0.78rem;
+      color: #fff;
+    }
+    .tech-pill-card small {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Project Details Table View */
+    .meta-table-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.78rem;
+    }
+    .meta-item-row {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #132238;
+      color: var(--text-muted);
+    }
+    .meta-item-row:last-child {
+      border-bottom: none;
+    }
+    .meta-label {
+      width: 155px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+    }
+    .meta-label i {
+      color: #38bdf8;
+      font-size: 0.85rem;
+    }
+    .meta-value {
+      color: #f8fafc;
+      font-weight: 500;
+    }
+
+    /* Bottom Status Footer */
+    .bottom-footer {
+      background-color: #08101e;
+      border-top: 1px solid var(--border-color);
+      height: 34px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Header -->
+  <header class="top-header">
+    <div class="brand-box">
+      <i class="fa-solid fa-cloud-bolt brand-icon"></i>
+      <div>
+        <div class="brand-title">HYPER-LOCAL <span>EARLY WARNING</span></div>
+        <div class="brand-subtitle">AI-driven hyper-local early warning system for secure weather nowcasting</div>
+      </div>
+      <div class="badge-group">
+        <span class="badge sih">SIH26077</span>
+        <span class="badge live"><span class="pulse-dot"></span> LIVE DWR FEED</span>
+      </div>
+    </div>
+
+    <div class="top-stats-bar">
+      <div class="top-stat">
+        <i class="fa-solid fa-location-dot"></i>
+        <div><strong>Jaipur Urban</strong><br><small>26.91° N, 75.78° E</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-cloud-sun"></i>
+        <div><strong id="head-temp">31.4°C</strong><br><small id="head-cond">Partly Cloudy</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-droplet"></i>
+        <div><strong id="head-humidity">78%</strong><br><small>Humidity</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-solid fa-wind"></i>
+        <div><strong id="head-wind">18.5 km/h</strong><br><small>NW Wind</small></div>
+      </div>
+      <div class="top-stat">
+        <i class="fa-regular fa-clock"></i>
+        <div><strong id="live-clock">14:32:18</strong><br><small>IST Live</small></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="app-body">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <nav class="nav-list">
+        <a href="index.html" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="area.html" class="nav-item"><i class="fa-solid fa-location-crosshairs"></i> Area Details</a>
+        <a href="map.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> Map View</a>
+        <a href="alert.html" class="nav-item"><i class="fa-solid fa-bell"></i> Alerts & Notifications</a>
+        <a href="about.html" class="nav-item active"><i class="fa-solid fa-circle-info"></i> About</a>
+      </nav>
+
+      <div class="sidebar-brand-card">
+        <div class="slogan-txt">Safer Jaipur<br>Stronger Tomorrow</div>
+        <div class="sih-cube">
+          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan); font-size: 1.2rem;"></i>
+          <div style="text-align: left;"><strong>SIH 2026</strong><br><small>Innovation for a Safer India</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main About Content Scrollable Area -->
+    <main class="main-about-scroll">
+      
+      <!-- Top About Banner Bar -->
+      <div class="about-top-banner">
+        <div class="about-top-left">
+          <div class="info-circle-icon">
+            <i class="fa-solid fa-info"></i>
+          </div>
+          <div class="about-title-text">
+            <h1>About <span>AI-Driven Hyper-Local Early Warning System</span></h1>
+            <p>AI-Powered Severe Weather Nowcasting System for a Safer Jaipur</p>
+          </div>
+        </div>
+        <div class="about-top-right">
+          <span>Real-time Insights &nbsp;•&nbsp; Smarter Decisions &nbsp;•&nbsp; Safer Communities</span>
+          <div class="dot-slider-bar">
+            <span class="active"></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 1: Project Overview & Monument Banner Quote -->
+      <div class="overview-row-grid">
+        <div class="card-dark">
+          <div class="card-heading">
+            <i class="fa-solid fa-bullseye"></i> Project Overview
+          </div>
+          <div class="overview-text">
+            <p>
+              <strong>AI-driven hyper-local early warning system for secure weather nowcasting</strong> is an advanced, AI-powered meteorology and flood-prediction framework designed to provide real-time, location-specific weather insights and early warnings for Jaipur[span_4](start_span)[span_4](end_span). The system integrates live data feeds from the IMD Doppler Weather Radar (DWR), INSAT-3DS convective satellite imagery, and ground sensors to analyze rainfall, predict extreme convective cells, and help citizens and authorities take timely proactive action[span_5](start_span)[span_5](end_span).
+            </p>
+            <p>
+              Our goal is to mitigate the catastrophic impact of severe weather events like localized cloudbursts, flash floods, and thunderstorms across Jaipur by delivering accurate 0–180 minute forecasts, interactive GIS visualizations, and automated alerts — right when they are needed most[span_6](start_span)[span_6](end_span).
+            </p>
+          </div>
+        </div>
+
+        <div class="monument-banner-card">
+          <div class="quote-overlay-box">
+            <h2>“ Better Forecasts.<br><span>Safer Jaipur. ”</span></h2>
+            <div class="quote-arrow">⟶</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Key Features (5 Columns) & Mission / Vision -->
+      <div class="features-mission-grid">
+        <div class="card-dark">
+          <div class="card-heading">
+            <i class="fa-solid fa-star"></i> Key Features
+          </div>
+          
+          <div class="features-subgrid">
+            <!-- Feature 1 -->
+            <div class="feature-item-card">
+              <div class="feature-icon-bubble bubble-blue">
+                <i class="fa-solid fa-wifi"></i>
+              </div>
+              <h4>Real-time Data Integration</h4>
+              <p>IMD DWR radar, INSAT-3DS satellite and IoT ground sensors[span_7](start_span)[span_7](end_span).</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="feature-item-card">
+              <div class="feature-icon-bubble bubble-purple">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <h4>AI-Powered Nowcasting</h4>
+              <p>Predicts rainfall intensity and severe weather up to 180 minutes[span_8](start_span)[span_8](end_span).</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="feature-item-card">
+              <div class="feature-icon-bubble bubble-green">
+                <i class="fa-solid fa-location-dot"></i>
+              </div>
+              <h4>Area / Ward-wise Analysis</h4>
+              <p>Detailed risk assessment for 70+ major areas of Jaipur[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span).</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="feature-item-card">
+              <div class="feature-icon-bubble bubble-amber">
+                <i class="fa-solid fa-bell"></i>
+              </div>
+              <h4>Instant Alerts</h4>
+              <p>CAP alerts, citizen SMS notifications and sirens[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span).</p>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="feature-item-card">
+              <div class="feature-icon-bubble bubble-red">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <h4>Public Safety & Preparedness</h4>
+              <p>Early warnings, safety recommendations and traffic advisories[span_13](start_span)[span_13](end_span).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mission & Vision -->
+        <div class="card-dark mission-vision-card">
+          <div class="mv-row">
+            <i class="fa-solid fa-rocket mv-icon"></i>
+            <div>
+              <h3>Our Mission</h3>
+              <p>To build a technology-driven platform that empowers citizens, local authorities and stakeholders with accurate, timely and actionable weather information — for a safer and more resilient Jaipur[span_14](start_span)[span_14](end_span).</p>
+            </div>
+          </div>
+
+          <div class="mv-row">
+            <i class="fa-solid fa-eye mv-icon" style="color: #38bdf8;"></i>
+            <div>
+              <h3>Our Vision</h3>
+              <p>A smart, connected and climate-resilient Jaipur, fully prepared for severe flash floods and seasonal urban inundation[span_15](start_span)[span_15](end_span).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Technology Stack & Project Details (With Natural Name Placement) -->
+      <div class="tech-details-grid">
+        <!-- Tech Stack -->
+        <div class="card-dark">
+          <div class="card-heading">
+            <i class="fa-solid fa-code"></i> Technology Stack
+          </div>
+          <div class="tech-subgrid">
+            <div class="tech-pill-card">
+              <i class="fa-brands fa-html5 tech-logo-icon icon-html"></i>
+              <strong>HTML5</strong>
+              <small>(Structure)</small>
+            </div>
+            <div class="tech-pill-card">
+              <i class="fa-brands fa-css3-alt tech-logo-icon icon-css"></i>
+              <strong>CSS3</strong>
+              <small>(Styling)</small>
+            </div>
+            <div class="tech-pill-card">
+              <i class="fa-brands fa-js tech-logo-icon icon-js"></i>
+              <strong>JavaScript</strong>
+              <small>(Interactivity)</small>
+            </div>
+            <div class="tech-pill-card">
+              <i class="fa-solid fa-wind tech-logo-icon icon-tailwind"></i>
+              <strong>Tailwind CSS</strong>
+              <small>(Responsive UI)</small>
+            </div>
+            <div class="tech-pill-card">
+              <i class="fa-solid fa-leaf tech-logo-icon icon-leaflet"></i>
+              <strong>Leaflet</strong>
+              <small>(Map & GIS)</small>
+            </div>
+            <div class="tech-pill-card">
+              <i class="fa-solid fa-chart-line tech-logo-icon icon-chartjs"></i>
+              <strong>Chart.js</strong>
+              <small>(Data Visualization)</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Details (Kunal Saini placed cleanly and naturally) -->
+        <div class="card-dark">
+          <div class="card-heading">
+            <i class="fa-solid fa-clipboard-list"></i> Project Details
+          </div>
+          <div class="meta-table-list">
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-id-badge"></i> Problem Statement ID</span>
+              <span class="meta-value">: &nbsp;SIH26077</span>
+            </div>
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-folder-open"></i> Project Title</span>
+              <span class="meta-value">: &nbsp;AI-Driven Hyper-Local Early Warning System</span>
+            </div>
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-user-gear"></i> Lead Developer</span>
+              <span class="meta-value" style="color: #38bdf8; font-weight: 700;">: &nbsp;Kunal Saini</span>
+            </div>
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-users"></i> Team Name</span>
+              <span class="meta-value">: &nbsp;Tech Mind's</span>
+            </div>
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-people-group"></i> Team Size</span>
+              <span class="meta-value">: &nbsp;6 Members</span>
+            </div>
+            <div class="meta-item-row">
+              <span class="meta-label"><i class="fa-solid fa-building-columns"></i> Agency / Guidance</span>
+              <span class="meta-value">: &nbsp;ISRO / MoES Mentorship Cell</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Bottom Global Footer -->
+  <footer class="bottom-footer">
+    <div>AI-DRIVEN HYPER-LOCAL EARLY WARNING SYSTEM &nbsp;|&nbsp; SIH26077 &nbsp;|&nbsp; MoES / IMD &nbsp;|&nbsp; ISRO</div>
+    <div style="display: flex; gap: 16px;">
+      <span><i class="fa-solid fa-circle" style="color: #10b981; font-size: 0.5rem;"></i> System Online</span>
+      <span>Latency: <strong>14.8s</strong></span>
+      <span>Resolution: <strong>500m / 5min</strong></span>
+    </div>
+  </footer>
+
+  <script>
+    // Live Clock Function
+    function updateClock() {
+      const el = document.getElementById("live-clock");
+      if (el) el.innerText = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Live Weather Header Fetch (Real-Time Open-Meteo)
+    async function fetchHeaderWeather() {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=26.9124&longitude=75.7873&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&timezone=Asia%2FKolkata");
+        const data = await res.json();
+        if (data && data.current) {
+          document.getElementById("head-temp").innerText = `${data.current.temperature_2m.toFixed(1)}°C`;
+          document.getElementById("head-humidity").innerText = `${data.current.relative_humidity_2m}%`;
+          document.getElementById("head-wind").innerText = `${data.current.wind_speed_10m} km/h`;
+          const rain = data.current.precipitation || 0.0;
+          document.getElementById("head-cond").innerText = rain > 0 ? "Rain Observed" : "Partly Cloudy";
+        }
+      } catch (e) {
+        console.warn("Live weather sync error:", e);
+      }
+    }
+    document.addEventListener("DOMContentLoaded", fetchHeaderWeather);
+  </script>
+</body>
+</html>
